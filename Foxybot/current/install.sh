@@ -21,10 +21,10 @@ install_git_if_needed() {
     if [ -f /etc/os-release ]; then
       source /etc/os-release
       if [ "$ID" == "ubuntu" ] || [ "$ID" == "debian" ]; then
-        sudo apt update
-        sudo apt install -y git
+        apt update
+        apt install -y git
       elif [ "$ID" == "centos" ] || [ "$ID" == "rhel" ]; then
-        sudo yum install -y git
+        yum install -y git
       fi
     elif [ "$(uname -s)" == "Darwin" ]; then # macOS
       brew install git
@@ -51,10 +51,14 @@ install_python3_and_pip_if_needed() {
     if [ -f /etc/os-release ]; then
       source /etc/os-release
       if [ "$ID" == "ubuntu" ] || [ "$ID" == "debian" ]; then
-        sudo apt update
-        sudo apt install -y python3 python3-pip python3-venv python3.12-venv
+        apt update
+        apt install -y python3 python3-pip python3-venv python3-setuptools python3-dev
+        
+        # Install correct python-venv package for the current Python version
+        python_version=$(python3 --version | cut -d' ' -f2 | cut -d'.' -f1-2)
+        apt install -y python${python_version}-venv
       elif [ "$ID" == "centos" ] || [ "$ID" == "rhel" ]; then
-        sudo yum install -y python3 python3-pip
+        yum install -y python3 python3-pip python3-devel
       fi
     elif [ "$(uname -s)" == "Darwin" ]; then # macOS
       brew install python@3
@@ -90,10 +94,11 @@ echo -e "${GREEN}Step 1: Cloning the repository and changing directory...${RESET
 
 repository_url="https://github.com/sina-nozhati/FoxyBot.git"
 install_dir="/opt/Hiddify-Telegram-Bot"
+bot_dir="Foxybot/current" # Path to the bot directory inside the repository
 
 branch="main"
 
-if [ "$0" == "--pre-release" ]; then
+if [ "$1" == "--pre-release" ]; then
     branch="pre-release"
 fi
 
@@ -105,9 +110,28 @@ if [ -d "$install_dir" ]; then
   rm -rf "$install_dir"
 fi
 
+# Create temporary directory for cloning
+temp_dir=$(mktemp -d)
+echo "Cloning repository to temporary directory: $temp_dir"
+
 # Clone the repository
 echo "Cloning repository..."
-git clone -b "$branch" "$repository_url" "$install_dir" || display_error_and_exit "Failed to clone the repository."
+git clone -b "$branch" "$repository_url" "$temp_dir" || display_error_and_exit "Failed to clone the repository."
+
+# Check if the bot directory exists in the repository
+if [ ! -d "$temp_dir/$bot_dir" ]; then
+  display_error_and_exit "Bot directory '$bot_dir' not found in repository"
+fi
+
+# Create install directory
+mkdir -p "$install_dir"
+
+# Copy files from the bot directory to the install directory
+echo "Copying files from $temp_dir/$bot_dir to $install_dir"
+cp -r "$temp_dir/$bot_dir"/* "$install_dir/" || display_error_and_exit "Failed to copy files"
+
+# Clean up temporary directory
+rm -rf "$temp_dir"
 
 cd "$install_dir" || display_error_and_exit "Failed to change directory."
 
@@ -118,7 +142,22 @@ if [ ! -f "hiddifyTelegramBot.py" ]; then
 fi
 
 if [ ! -f "config.json" ]; then
-    display_error_and_exit "config.json not found in repository"
+    # If config.json doesn't exist, create a minimal one
+    echo "Creating minimal config.json file"
+    cat > config.json << 'EOL'
+{
+  "admin_id": 0,
+  "token": "",
+  "database": "Database/database.db",
+  "log_file": "Logs/bot.log",
+  "user_log_file": "Logs/user_bot.log",
+  "admin_log_file": "Logs/admin_bot.log",
+  "backup_dir": "Database/Backup",
+  "max_file_size": 50,
+  "allowed_hosts": ["x8.hiddify.com"],
+  "is_debug_mode": true
+}
+EOL
 fi
 
 echo "Files verified successfully"
@@ -127,8 +166,24 @@ echo -e "${GREEN}Step 2: Creating and activating virtual environment...${RESET}"
 python3 -m venv venv || display_error_and_exit "Failed to create virtual environment."
 source venv/bin/activate || display_error_and_exit "Failed to activate virtual environment."
 
+# Upgrade pip, setuptools, and wheel
+pip install --upgrade pip setuptools wheel || echo "Warning: Failed to upgrade pip, setuptools, and wheel"
+
 echo -e "${GREEN}Step 3: Installing requirements...${RESET}"
-pip install -r requirements.txt || display_error_and_exit "Failed to install requirements."
+if [ -f "requirements.txt" ]; then
+    pip install -r requirements.txt || echo "Warning: Failed to install some requirements. Trying alternative method..."
+    
+    # Try to install requirements individually
+    pip install psutil || echo "Warning: Failed to install psutil"
+    pip install pyTelegramBotAPI --no-build-isolation || echo "Warning: Failed to install pyTelegramBotAPI"
+    pip install requests || echo "Warning: Failed to install requests"
+    pip install termcolor || echo "Warning: Failed to install termcolor"
+    pip install qrcode || echo "Warning: Failed to install qrcode"
+    pip install pytz || echo "Warning: Failed to install pytz"
+else
+    echo "requirements.txt not found, installing common requirements..."
+    pip install psutil pyTelegramBotAPI requests termcolor qrcode pytz
+fi
 
 echo -e "${GREEN}Step 4: Preparing ...${RESET}"
 logs_dir="$install_dir/Logs"
@@ -143,14 +198,30 @@ create_directory_if_not_exists() {
 
 create_directory_if_not_exists "$logs_dir"
 create_directory_if_not_exists "$receiptions_dir"
+create_directory_if_not_exists "$install_dir/Database"
+create_directory_if_not_exists "$install_dir/Database/Backup"
 
-chmod +x "$install_dir/restart.sh"
-chmod +x "$install_dir/update.sh"
+# Make sure restart.sh and update.sh are executable
+if [ -f "$install_dir/restart.sh" ]; then
+    chmod +x "$install_dir/restart.sh"
+fi
+
+if [ -f "$install_dir/update.sh" ]; then
+    chmod +x "$install_dir/update.sh"
+fi
 
 echo -e "${GREEN}Step 5: Setting up configuration...${RESET}"
-# Backup existing config if it exists
-if [ -f "$install_dir/config.json" ]; then
-  cp "$install_dir/config.json" "$install_dir/config.json.bak"
+# Prompt for bot token and admin ID if config is empty
+if grep -q '"token": ""' config.json; then
+    echo "Please enter your Telegram bot token:"
+    read -r token
+    sed -i "s/\"token\": \"\"/\"token\": \"$token\"/g" config.json
+fi
+
+if grep -q '"admin_id": 0' config.json; then
+    echo "Please enter your Telegram admin ID:"
+    read -r admin_id
+    sed -i "s/\"admin_id\": 0/\"admin_id\": $admin_id/g" config.json
 fi
 
 echo -e "${GREEN}Step 6: Running the bot in the background...${RESET}"
