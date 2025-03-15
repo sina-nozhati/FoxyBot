@@ -1,0 +1,17 @@
+/Database/hidyBot.db
+/Logs
+/Backup
+/UserBot/Receiptions
+/.idea
+/temp
+/Utils/swapWallet.py
+
+/.handler-saves
+hiddifypanel.db
+
+*.pyc
+*.pyo!/qodana.yaml
+qodana.yaml
+check-host.py
+.vscode/launch.json
+Database/hidyBot1.db

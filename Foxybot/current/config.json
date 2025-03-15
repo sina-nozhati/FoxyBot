@@ -1,0 +1,22 @@
+{
+    "ADMIN_TELEGRAM_ID": "1439007465",
+    "ADMIN_BOT_TOKEN": "6519479210:AAFhHaLcD_ta9M6p1C5oUdoTyBPSANE-MHY",
+    "CLIENT_BOT_TOKEN": "",
+    "HIDDIFY_PANEL_URL": "https://testbot.sin1990.ir/GSaIeUm8V40qw08RRvaiS1VJFBV/a504b396-fa59-4c50-bdd1-004c574399cf",
+    "LANGUAGE": "fa",
+    "BACKUP_ENABLED": "0",
+    "BACKUP_INTERVAL": "24",
+    "BACKUP_CLOUD_ENABLED": "0",
+    "BACKUP_CLOUD_TOKEN": "",
+    "PAYMENT_METHODS": {
+        "card": {
+            "enabled": false,
+            "card_number": "6037-3684-6598-5654",
+            "card_holder": "Sina Nozhati"
+        },
+        "crypto": {
+            "enabled": false,
+            "wallet_address": ""
+        }
+    }
+} 
