@@ -91,7 +91,7 @@ ADMINS_ID, TELEGRAM_TOKEN, CLIENT_TOKEN, PANEL_URL, LANG, PANEL_ADMIN_ID = None,
 
 
 def set_config_variables(configs, server_url):
-    if not conf['bot_admin_id'] and not conf['bot_token_admin'] and not conf['bot_lang'] or not server_url:
+    if not configs.get('bot_admin_id') or not configs.get('bot_token_admin') or not configs.get('bot_lang') or not server_url:
         print(colored("Config is not set! , Please run config.py first", "red"))
         raise Exception(f"Config is not set!\nBe in touch with {HIDY_BOT_ID}")
 

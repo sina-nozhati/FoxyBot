@@ -52,7 +52,11 @@ install_python3_and_pip_if_needed() {
       source /etc/os-release
       if [ "$ID" == "ubuntu" ] || [ "$ID" == "debian" ]; then
         apt update
-        apt install -y python3 python3-pip python3-venv python3-dev
+        apt install -y python3 python3-pip python3-venv python3-setuptools python3-dev
+        
+        # Install correct python-venv package for the current Python version
+        python_version=$(python3 --version | cut -d' ' -f2 | cut -d'.' -f1-2)
+        apt install -y python${python_version}-venv
       elif [ "$ID" == "centos" ] || [ "$ID" == "rhel" ]; then
         yum install -y python3 python3-pip python3-devel
       fi
@@ -72,61 +76,6 @@ install_python3_and_pip_if_needed() {
   fi
 }
 
-# Function to create and set up a virtual environment
-setup_virtual_environment() {
-  echo "Setting up a Python virtual environment..."
-  
-  # Install python3-venv if needed
-  if ! python3 -m venv --help > /dev/null 2>&1; then
-    echo "Installing python3-venv..."
-    if [ -f /etc/os-release ]; then
-      source /etc/os-release
-      if [ "$ID" == "ubuntu" ] || [ "$ID" == "debian" ]; then
-        apt install -y python3-venv
-      elif [ "$ID" == "centos" ] || [ "$ID" == "rhel" ]; then
-        yum install -y python3-venv
-      fi
-    fi
-  fi
-  
-  # Create virtual environment
-  python3 -m venv "$install_dir/venv" || display_error_and_exit "Failed to create virtual environment."
-  
-  # Activate virtual environment
-  source "$install_dir/venv/bin/activate" || display_error_and_exit "Failed to activate virtual environment."
-  
-  # Upgrade essential packages
-  python -m pip install --upgrade pip setuptools wheel || echo "Warning: Failed to upgrade pip, setuptools, and wheel, but continuing installation."
-  
-  echo "Virtual environment has been set up successfully."
-}
-
-# Alternative method to install packages
-install_packages_alternative() {
-  echo "Trying alternative installation method..."
-  
-  # Try installing with system package manager first
-  if [ -f /etc/os-release ]; then
-    source /etc/os-release
-    if [ "$ID" == "ubuntu" ] || [ "$ID" == "debian" ]; then
-      apt update
-      apt install -y python3-psutil python3-requests python3-qrcode python3-pytz python3-termcolor
-      pip install pyTelegramBotAPI==4.12.0 --no-deps
-      return 0
-    fi
-  fi
-  
-  # If system package manager doesn't work, try installing individually
-  pip install psutil==5.9.4 || echo "Warning: Failed to install psutil"
-  pip install requests==2.30.0 || echo "Warning: Failed to install requests"
-  pip install termcolor==2.3.0 || echo "Warning: Failed to install termcolor"
-  pip install qrcode==7.4.2 || echo "Warning: Failed to install qrcode"
-  pip install pytz==2023.3.post1 || echo "Warning: Failed to install pytz"
-  pip install pyTelegramBotAPI==4.12.0 --no-build-isolation || pip install pyTelegramBotAPI==4.14.0 || echo "Warning: Failed to install pyTelegramBotAPI"
-  
-  return 0
-}
-
 echo -e "${GREEN}Step 0: Checking requirements...${RESET}"
 install_git_if_needed
 install_python3_and_pip_if_needed
@@ -143,8 +92,9 @@ fi
 
 echo -e "${GREEN}Step 1: Cloning the repository and changing directory...${RESET}"
 
-repository_url="https://github.com/B3H1Z/Hiddify-Telegram-Bot.git"
+repository_url="https://github.com/sina-nozhati/FoxyBot.git"
 install_dir="/opt/Hiddify-Telegram-Bot"
+bot_dir="Foxybot/legacy" # Path to the legacy bot directory inside the repository
 
 branch="main"
 
@@ -154,19 +104,67 @@ fi
 
 echo "Selected branch: $branch"
 
+# Remove existing directory if it exists
 if [ -d "$install_dir" ]; then
-  echo "Directory $install_dir exists."
-else
-  git clone -b "$branch" "$repository_url" "$install_dir" || display_error_and_exit "Failed to clone the repository."
+  echo "Removing existing directory $install_dir"
+  rm -rf "$install_dir"
 fi
+
+# Create temporary directory for cloning
+temp_dir=$(mktemp -d)
+echo "Cloning repository to temporary directory: $temp_dir"
+
+# Clone the repository
+echo "Cloning repository..."
+git clone -b "$branch" "$repository_url" "$temp_dir" || display_error_and_exit "Failed to clone the repository."
+
+# Check if the bot directory exists in the repository
+if [ ! -d "$temp_dir/$bot_dir" ]; then
+  display_error_and_exit "Bot directory '$bot_dir' not found in repository"
+fi
+
+# Create install directory
+mkdir -p "$install_dir"
+
+# Copy files from the bot directory to the install directory
+echo "Copying files from $temp_dir/$bot_dir to $install_dir"
+cp -r "$temp_dir/$bot_dir"/* "$install_dir/" || display_error_and_exit "Failed to copy files"
+
+# Clean up temporary directory
+rm -rf "$temp_dir"
 
 cd "$install_dir" || display_error_and_exit "Failed to change directory."
 
-echo -e "${GREEN}Step 2: Setting up virtual environment...${RESET}"
-setup_virtual_environment
+# Verify the files
+echo "Verifying files..."
+if [ ! -f "hiddifyTelegramBot.py" ]; then
+    display_error_and_exit "hiddifyTelegramBot.py not found in repository"
+fi
+
+echo "Files verified successfully"
+
+echo -e "${GREEN}Step 2: Creating and activating virtual environment...${RESET}"
+python3 -m venv venv || display_error_and_exit "Failed to create virtual environment."
+source venv/bin/activate || display_error_and_exit "Failed to activate virtual environment."
+
+# Upgrade pip, setuptools, and wheel
+pip install --upgrade pip setuptools wheel || echo "Warning: Failed to upgrade pip, setuptools, and wheel"
 
 echo -e "${GREEN}Step 3: Installing requirements...${RESET}"
-pip install -r requirements.txt || install_packages_alternative
+if [ -f "requirements.txt" ]; then
+    pip install -r requirements.txt || echo "Warning: Failed to install some requirements. Trying alternative method..."
+    
+    # Try to install requirements individually
+    pip install psutil || echo "Warning: Failed to install psutil"
+    pip install pyTelegramBotAPI --no-build-isolation || echo "Warning: Failed to install pyTelegramBotAPI"
+    pip install requests || echo "Warning: Failed to install requests"
+    pip install termcolor || echo "Warning: Failed to install termcolor"
+    pip install qrcode || echo "Warning: Failed to install qrcode"
+    pip install pytz || echo "Warning: Failed to install pytz"
+else
+    echo "requirements.txt not found, installing common requirements..."
+    pip install psutil pyTelegramBotAPI requests termcolor qrcode pytz
+fi
 
 echo -e "${GREEN}Step 4: Preparing ...${RESET}"
 logs_dir="$install_dir/Logs"
@@ -181,27 +179,23 @@ create_directory_if_not_exists() {
 
 create_directory_if_not_exists "$logs_dir"
 create_directory_if_not_exists "$receiptions_dir"
+create_directory_if_not_exists "$install_dir/Database"
+create_directory_if_not_exists "$install_dir/Database/Backup"
 
-chmod +x "$install_dir/restart.sh"
-chmod +x "$install_dir/update.sh"
+# Make sure restart.sh and update.sh are executable
+if [ -f "$install_dir/restart.sh" ]; then
+    chmod +x "$install_dir/restart.sh"
+fi
 
-# Create a wrapper script to run commands with the virtual environment
-cat > "$install_dir/run_with_venv.sh" << 'EOL'
-#!/bin/bash
-source "$(dirname "$0")/venv/bin/activate"
-exec "$@"
-EOL
-chmod +x "$install_dir/run_with_venv.sh"
-
-# Update the restart script to use the virtual environment
-sed -i 's|python3 hiddifyTelegramBot.py|./run_with_venv.sh python3 hiddifyTelegramBot.py|g' "$install_dir/restart.sh" || echo "Warning: Failed to update restart script."
+if [ -f "$install_dir/update.sh" ]; then
+    chmod +x "$install_dir/update.sh"
+fi
 
 echo -e "${GREEN}Step 5: Running config.py to generate config.json...${RESET}"
-source "$install_dir/venv/bin/activate" 
 python3 config.py || display_error_and_exit "Failed to run config.py."
 
 echo -e "${GREEN}Step 6: Running the bot in the background...${RESET}"
-nohup ./run_with_venv.sh python3 hiddifyTelegramBot.py >>$install_dir/bot.log 2>&1 &
+nohup python3 hiddifyTelegramBot.py >>$install_dir/bot.log 2>&1 &
 
 echo -e "${GREEN}Step 7: Adding cron jobs...${RESET}"
 
@@ -226,13 +220,13 @@ add_cron_job_if_not_exists() {
 
 
 # Add cron job for reboot
-add_cron_job_if_not_exists "@reboot cd $install_dir && ./restart.sh"
+add_cron_job_if_not_exists "@reboot cd $install_dir && source venv/bin/activate && ./restart.sh"
 
-# Add cron job to run every 6 hours - with virtual environment
-add_cron_job_if_not_exists "0 */6 * * * cd $install_dir && ./run_with_venv.sh python3 crontab.py --backup"
+# Add cron job to run every 6 hours
+add_cron_job_if_not_exists "0 */6 * * * cd $install_dir && source venv/bin/activate && python3 crontab.py --backup"
 
-# Add cron job to run at 12:00 PM daily - with virtual environment
-add_cron_job_if_not_exists "0 12 * * * cd $install_dir && ./run_with_venv.sh python3 crontab.py --reminder"
+# Add cron job to run at 12:00 PM daily
+add_cron_job_if_not_exists "0 12 * * * cd $install_dir && source venv/bin/activate && python3 crontab.py --reminder"
 
 echo -e "${GREEN}Waiting for a few seconds...${RESET}"
 sleep 5
@@ -243,6 +237,3 @@ if pgrep -f "python3 hiddifyTelegramBot.py" >/dev/null; then
 else
   display_error_and_exit "Failed to start the bot. Please check for errors and try again."
 fi
-
-# Deactivate virtual environment
-deactivate
