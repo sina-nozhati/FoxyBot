@@ -52,9 +52,9 @@ install_python3_and_pip_if_needed() {
       source /etc/os-release
       if [ "$ID" == "ubuntu" ] || [ "$ID" == "debian" ]; then
         sudo apt update
-        sudo apt install -y python3 python3-pip
+        sudo apt install -y python3 python3-pip python3-dev build-essential
       elif [ "$ID" == "centos" ] || [ "$ID" == "rhel" ]; then
-        sudo yum install -y python3 python3-pip
+        sudo yum install -y python3 python3-pip python3-devel gcc
       fi
     elif [ "$(uname -s)" == "Darwin" ]; then # macOS
       brew install python@3
@@ -71,6 +71,7 @@ install_python3_and_pip_if_needed() {
     echo "Python 3 and pip have been installed successfully."
   fi
 }
+
 echo -e "${GREEN}Step 0: Checking requirements...${RESET}"
 install_git_if_needed
 install_python3_and_pip_if_needed
@@ -107,8 +108,15 @@ fi
 cd "$install_dir" || display_error_and_exit "Failed to change directory."
 
 echo -e "${GREEN}Step 2: Installing requirements...${RESET}"
-pip install -r requirements.txt || display_error_and_exit "Failed to install requirements."
 
+# نصب pip به‌روز
+python3 -m pip install --upgrade pip
+
+# نصب wheel
+pip install wheel
+
+# نصب پکیج‌ها
+pip install -r requirements.txt || display_error_and_exit "Failed to install requirements."
 
 echo -e "${GREEN}Step 3: Preparing ...${RESET}"
 logs_dir="$install_dir/Logs"
@@ -154,7 +162,6 @@ add_cron_job_if_not_exists() {
   fi
 }
 
-
 # Add cron job for reboot
 add_cron_job_if_not_exists "@reboot cd $install_dir && ./restart.sh"
 
@@ -163,7 +170,6 @@ add_cron_job_if_not_exists "0 */6 * * * cd $install_dir && python3 crontab.py --
 
 # Add cron job to run at 12:00 PM daily
 add_cron_job_if_not_exists "0 12 * * * cd $install_dir && python3 crontab.py --reminder"
-
 
 echo -e "${GREEN}Waiting for a few seconds...${RESET}"
 sleep 5

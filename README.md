@@ -36,7 +36,7 @@ Hidy Bot is a Telegram bot that allows you to manage your Hiddify panel directly
 To install the bot, run the following command:
 
 ```bash
-sudo bash -c "$(curl -Lfo- https://raw.githubusercontent.com/SinaNozhatie/FoxyBot/main/install.sh)"
+sudo bash -c "$(curl -Lfo- https://raw.githubusercontent.com/sina-nozhati/FoxyBot/main/install.sh)"
 ```
 <br>
 
