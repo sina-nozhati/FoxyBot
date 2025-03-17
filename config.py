@@ -98,11 +98,23 @@ def set_config_variables(configs, server_url):
         setup_users_db()
     PANEL_URL = server_url
     LANG = configs["bot_lang"]
-    PANEL_ADMIN_ID = urlparse(PANEL_URL).path.split('/')[2]
+    
+    # اصلاح استخراج PANEL_ADMIN_ID
+    try:
+        parsed_url = urlparse(PANEL_URL)
+        path_parts = [p for p in parsed_url.path.split('/') if p]
+        if len(path_parts) >= 2:
+            PANEL_ADMIN_ID = path_parts[1]
+        else:
+            print(colored("Invalid panel URL format. URL should contain proxy_path and API key.", "red"))
+            raise Exception(f"Invalid panel URL format!\nBe in touch with {HIDY_BOT_ID}")
+    except Exception as e:
+        print(colored(f"Error parsing panel URL: {str(e)}", "red"))
+        raise Exception(f"Error parsing panel URL!\nBe in touch with {HIDY_BOT_ID}")
+
     if not PANEL_ADMIN_ID:
         print(colored("Admin panel UUID is not valid!", "red"))
         raise Exception(f"Admin panel UUID is not valid!\nBe in touch with {HIDY_BOT_ID}")
-    PANEL_ADMIN_ID = PANEL_ADMIN_ID[0][0]
 
 def panel_url_validator(url):
     """Validate Hiddify panel URL format and connectivity"""
@@ -115,7 +127,8 @@ def panel_url_validator(url):
         
         # Check if URL has at least 2 parts (base URL and proxy_path)
         if len(parts) < 4:
-            print("Invalid panel URL format. URL should contain base URL, proxy_path and API key.")
+            print(colored("Invalid panel URL format. URL should contain base URL, proxy_path and API key.", "red"))
+            print(colored("Example: https://panel.example.com/7frgemkvtE0/78854985-68dp-425c-989b-7ap0c6kr9bd4", "yellow"))
             return False
             
         # Get base URL, proxy_path and api_key
@@ -130,18 +143,18 @@ def panel_url_validator(url):
         try:
             result = ping_panel(proxy_path, api_key)
             if "error" in result:
-                print(f"Error connecting to panel: {result['error']}")
-                print(f"Please check if the URL is correct: {base_url}/{proxy_path}/api/v2/panel/ping/")
+                print(colored(f"Error connecting to panel: {result['error']}", "red"))
+                print(colored(f"Please check if the URL is correct: {base_url}/{proxy_path}/api/v2/panel/ping/", "yellow"))
                 return False
-            print("Successfully connected to panel!")
+            print(colored("Successfully connected to panel!", "green"))
             return True
         except Exception as e:
-            print(f"Error connecting to panel: {str(e)}")
-            print(f"Please check if the URL is correct: {base_url}/{proxy_path}/api/v2/panel/ping/")
+            print(colored(f"Error connecting to panel: {str(e)}", "red"))
+            print(colored(f"Please check if the URL is correct: {base_url}/{proxy_path}/api/v2/panel/ping/", "yellow"))
             return False
             
     except Exception as e:
-        print(f"Invalid panel URL: {e}")
+        print(colored(f"Invalid panel URL: {e}", "red"))
         return False
 
 def bot_token_validator(token):
