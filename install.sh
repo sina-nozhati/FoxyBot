@@ -112,11 +112,11 @@ echo -e "${GREEN}Step 2: Installing requirements...${RESET}"
 # نصب pip به‌روز
 python3 -m pip install --upgrade pip
 
-# نصب wheel
-pip install wheel
+# نصب setuptools و wheel
+pip install --upgrade setuptools wheel
 
 # نصب پکیج‌ها
-pip install -r requirements.txt || display_error_and_exit "Failed to install requirements."
+pip install --no-cache-dir -r requirements.txt || display_error_and_exit "Failed to install requirements."
 
 echo -e "${GREEN}Step 3: Preparing ...${RESET}"
 logs_dir="$install_dir/Logs"
