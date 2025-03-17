@@ -101,13 +101,25 @@ def set_config_variables(configs, server_url):
     
     # Parse URL and extract admin ID
     try:
-        parsed_url = urlparse(PANEL_URL)
-        path_parts = parsed_url.path.strip('/').split('/')
-        if len(path_parts) >= 2:
-            PANEL_ADMIN_ID = path_parts[1]
-        else:
-            print(colored("Invalid panel URL format!", "red"))
+        # Remove trailing slashes
+        url = PANEL_URL.rstrip("/")
+        
+        # Parse URL
+        parsed_url = urlparse(url)
+        if not parsed_url.scheme or not parsed_url.netloc:
+            print(colored("Invalid panel URL format. URL must include scheme (http/https) and domain.", "red"))
             raise Exception(f"Invalid panel URL format!\nBe in touch with {HIDY_BOT_ID}")
+            
+        # Split path into parts
+        path_parts = parsed_url.path.strip('/').split('/')
+        if len(path_parts) < 2:
+            print(colored("Invalid panel URL format. URL must include proxy_path and API key.", "red"))
+            raise Exception(f"Invalid panel URL format!\nBe in touch with {HIDY_BOT_ID}")
+            
+        # Extract admin ID from the last part of the path
+        PANEL_ADMIN_ID = path_parts[-1]
+        print(colored(f"Successfully parsed panel URL. Admin ID: {PANEL_ADMIN_ID}", "green"))
+        
     except Exception as e:
         print(colored(f"Error parsing panel URL: {str(e)}", "red"))
         raise Exception(f"Error parsing panel URL!\nBe in touch with {HIDY_BOT_ID}")
