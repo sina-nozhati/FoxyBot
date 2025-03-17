@@ -101,17 +101,15 @@ def set_config_variables(configs, server_url):
     PANEL_URL = server_url
     LANG = configs["bot_lang"]
     
-    print(colored(f"Debug - Panel URL: {PANEL_URL}", "yellow"))
+    # Set base URL for API calls
+    parsed_url = urlparse(PANEL_URL)
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    set_panel_url(base_url)
     
     # Extract proxy_path and api_key from the panel URL
     try:
         proxy_path, api_key = parse_panel_url(PANEL_URL)
         PANEL_ADMIN_ID = api_key  # Set the admin ID to the API key
-        
-        # Set base URL for API calls
-        parsed_url = urlparse(PANEL_URL)
-        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
-        set_panel_url(base_url)
         
         print(colored(f"Successfully parsed panel URL:", "green"))
         print(colored(f"Base URL: {base_url}", "green"))
@@ -132,8 +130,6 @@ def set_config_variables(configs, server_url):
 
 def panel_url_validator(url):
     """Validate Hiddify panel URL format and connectivity"""
-    print(colored(f"Validating panel URL: {url}", "cyan"))
-    
     try:
         # Parse URL to extract proxy_path and api_key
         proxy_path, api_key = parse_panel_url(url)
