@@ -113,10 +113,27 @@ echo -e "${GREEN}Step 2: Installing requirements...${RESET}"
 python3 -m pip install --upgrade pip
 
 # نصب setuptools و wheel
-pip install --upgrade setuptools wheel
+python3 -m pip install --upgrade setuptools wheel
 
-# نصب پکیج‌ها
-pip install --no-cache-dir -r requirements.txt || display_error_and_exit "Failed to install requirements."
+# نصب distutils
+python3 -m pip install --upgrade distutils
+
+# نصب پکیج‌های سیستم مورد نیاز
+if [ -f /etc/os-release ]; then
+  source /etc/os-release
+  if [ "$ID" == "ubuntu" ] || [ "$ID" == "debian" ]; then
+    sudo apt update
+    sudo apt install -y python3-dev build-essential libffi-dev python3-distutils
+  elif [ "$ID" == "centos" ] || [ "$ID" == "rhel" ]; then
+    sudo yum install -y python3-devel gcc libffi-devel python3-distutils
+  fi
+fi
+
+# نصب پکیج‌ها با استفاده از python3 -m pip
+python3 -m pip install --no-cache-dir -r requirements.txt || display_error_and_exit "Failed to install requirements."
+
+# اطمینان از نصب requests
+python3 -m pip install --no-cache-dir requests || display_error_and_exit "Failed to install requests."
 
 echo -e "${GREEN}Step 3: Preparing ...${RESET}"
 logs_dir="$install_dir/Logs"
