@@ -129,9 +129,12 @@ def set_config_variables(configs, server_url):
         print(colored(f"Admin ID: {PANEL_ADMIN_ID}", "green"))
         
         # Test connection to panel
+        print(colored("Testing connection to panel...", "cyan"))
         result = ping_panel(proxy_path, api_key)
         if "error" in result:
-            print(colored(f"Warning - Error connecting to panel: {result['error']}", "yellow"))
+            print(colored(f"Error connecting to panel: {result['error']}", "red"))
+            print(colored(f"Please check if the URL is correct: {base_url}/{proxy_path}/api/v2/panel/ping/", "yellow"))
+            return False
         else:
             print(colored("Panel connection successful!", "green"))
         
@@ -144,15 +147,11 @@ def panel_url_validator(url):
     try:
         # Parse URL to extract proxy_path and api_key
         proxy_path, api_key = parse_panel_url(url)
-        print(colored(f"URL parsed successfully:", "green"))
-        print(colored(f"Proxy Path: {proxy_path}", "green"))
-        print(colored(f"API Key: {api_key}", "green"))
         
         # Set base URL for API calls
         parsed_url = urlparse(url)
         base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
         set_panel_url(base_url)
-        print(colored(f"Base URL set to: {base_url}", "green"))
         
         # Test connection to panel
         print(colored("Testing connection to panel...", "cyan"))
@@ -161,7 +160,7 @@ def panel_url_validator(url):
             print(colored(f"Error connecting to panel: {result['error']}", "red"))
             print(colored(f"Please check if the URL is correct: {base_url}/{proxy_path}/api/v2/panel/ping/", "yellow"))
             return False
-        
+            
         print(colored("Successfully connected to panel!", "green"))
         return True
     except ValueError as e:
@@ -198,7 +197,7 @@ def set_by_user():
             continue
         admin_ids = [int(admin_id) for admin_id in admin_ids]
         break
-
+            
     print()
     print(colored("Example: 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ\n[get it from @BotFather]", "yellow"))
     while True:
@@ -209,7 +208,7 @@ def set_by_user():
         if not bot_token_validator(token):
             continue
         break
-
+    
     print()
     print(colored("You can use the bot as a userbot for your clients!", "yellow"))
     while True:
@@ -218,7 +217,7 @@ def set_by_user():
             print(colored("Please enter y or n!", "red"))
             continue
         break
-
+            
     if userbot == "y":
         print()
         print(colored("Example: 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ\n[get it from @BotFather]", "yellow"))
@@ -235,7 +234,7 @@ def set_by_user():
             break
     else:
         client_token = None
-
+    
     print()
     print(colored("Example: https://panel.example.com/7frgemkvtE0/78854985-68dp-425c-989b-7ap0c6kr9bd4\n[exactly like this!]", "yellow"))
     panel_url = None

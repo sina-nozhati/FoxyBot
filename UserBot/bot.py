@@ -1135,20 +1135,34 @@ def callback_query(call: CallbackQuery):
 # Bot Start Message Handler
 @bot.message_handler(commands=['start'])
 def start_bot(message: Message):
+    print(f"User {message.from_user.id} ({message.from_user.username}) sent /start command")
+    logging.info(f"User {message.from_user.id} ({message.from_user.username}) sent /start command")
+    
     if is_user_banned(message.chat.id):
+        print(f"User {message.from_user.id} is banned")
         return
+        
     settings = utils.all_configs_settings()
+    print(f"Settings loaded: {settings}")
 
     MESSAGES['WELCOME'] = MESSAGES['WELCOME'] if not settings['msg_user_start'] else settings['msg_user_start']
+    print(f"Welcome message: {MESSAGES['WELCOME']}")
     
     if USERS_DB.find_user(telegram_id=message.chat.id):
+        print(f"User {message.from_user.id} exists in database, updating information")
         edit_name= USERS_DB.edit_user(telegram_id=message.chat.id,full_name=message.from_user.full_name)
         edit_username = USERS_DB.edit_user(telegram_id=message.chat.id,username=message.from_user.username)
-        bot.send_message(message.chat.id, MESSAGES['WELCOME'], reply_markup=main_menu_keyboard_markup())
+        try:
+            bot.send_message(message.chat.id, MESSAGES['WELCOME'], reply_markup=main_menu_keyboard_markup())
+            print(f"Sent welcome message to user {message.from_user.id}")
+        except Exception as e:
+            print(f"Error sending welcome message to user {message.from_user.id}: {e}")
     else:
+        print(f"User {message.from_user.id} does not exist in database, adding new user")
         created_at = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         status = USERS_DB.add_user(telegram_id=message.chat.id,username=message.from_user.username, full_name=message.from_user.full_name, created_at=created_at)
         if not status:
+            print(f"Error adding user {message.from_user.id} to database")
             bot.send_message(message.chat.id, MESSAGES['UNKNOWN_ERROR'],
                              reply_markup=main_menu_keyboard_markup())
             return
@@ -1156,10 +1170,14 @@ def start_bot(message: Message):
         if not wallet_status:
             status = USERS_DB.add_wallet(telegram_id=message.chat.id)
             if not status:
+                print(f"Error adding wallet for user {message.from_user.id}")
                 bot.send_message(message.chat.id, f"{MESSAGES['UNKNOWN_ERROR']}:Wallet",
                                  reply_markup=main_menu_keyboard_markup())
-                return
+        try:
             bot.send_message(message.chat.id, MESSAGES['WELCOME'], reply_markup=main_menu_keyboard_markup())
+            print(f"Sent welcome message to new user {message.from_user.id}")
+        except Exception as e:
+            print(f"Error sending welcome message to new user {message.from_user.id}: {e}")
 
     join_status = is_user_in_channel(message.chat.id)
     if not join_status:
@@ -1415,13 +1433,36 @@ def start():
     except telebot.apihelper.ApiTelegramException as e:
         if e.result.status_code == 401:
             logging.error("Invalid Telegram Bot Token!")
+            print(colored("Invalid Telegram Bot Token!", "red"))
             exit(1)
+        else:
+            logging.error(f"Error setting bot commands: {e}")
+            print(colored(f"Error setting bot commands: {e}", "red"))
+    
     # Welcome to Admin
     for admin in ADMINS_ID:
         try:
             bot.send_message(admin, MESSAGES['WELCOME_TO_ADMIN'])
+            print(colored(f"Welcome message sent to admin {admin}", "green"))
         except Exception as e:
             logging.warning(f"Error in send message to admin {admin}: {e}")
+            print(colored(f"Error in send message to admin {admin}: {e}", "yellow"))
+    
+    # Test API Token
+    try:
+        me = bot.get_me()
+        print(colored(f"Bot connected successfully as @{me.username}", "green"))
+    except Exception as e:
+        print(colored(f"Error connecting to Telegram: {e}", "red"))
+        logging.error(f"Error connecting to Telegram: {e}")
+        exit(1)
+    
+    print(colored("Starting bot polling...", "green"))
     bot.enable_save_next_step_handlers()
     bot.load_next_step_handlers()
-    bot.infinity_polling()
+    try:
+        bot.infinity_polling()
+    except Exception as e:
+        print(colored(f"Error in bot polling: {e}", "red"))
+        logging.error(f"Error in bot polling: {e}")
+        exit(1)

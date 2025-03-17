@@ -159,45 +159,93 @@ chmod +x "$install_dir/update.sh"
 echo -e "${GREEN}Step 4: Running config.py to generate config.json...${RESET}"
 "$VENV_DIR/bin/python3" config.py || display_error_and_exit "Failed to run config.py."
 
-echo -e "${GREEN}Step 5: Running the bot in the background...${RESET}"
-nohup "$VENV_DIR/bin/python3" hiddifyTelegramBot.py >>$install_dir/bot.log 2>&1 &
+# ربات را با سرویس systemd راه‌اندازی می‌کند
+setup_systemd_service() {
+  echo "Creating systemd service for the bot..."
+  
+  # Create systemd service file
+  cat > /etc/systemd/system/hiddify-telegram-bot.service << EOL
+[Unit]
+Description=Hiddify Telegram Bot Service
+After=network.target
 
-echo -e "${GREEN}Step 6: Adding cron jobs...${RESET}"
+[Service]
+User=root
+WorkingDirectory=${install_dir}
+ExecStart=${install_dir}/venv/bin/python ${install_dir}/hiddifyTelegramBot.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
 
-add_cron_job_if_not_exists() {
-  local cron_job="$1"
-  local current_crontab
+[Install]
+WantedBy=multi-user.target
+EOL
 
-  # Normalize the cron job formatting (remove extra spaces)
-  cron_job=$(echo "$cron_job" | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')
+  # Reload systemd, enable and start the service
+  systemctl daemon-reload
+  systemctl enable hiddify-telegram-bot
+  systemctl restart hiddify-telegram-bot
+  
+  echo "Systemd service created and started"
+}
 
-  # Check if the cron job already exists in the current user's crontab
-  current_crontab=$(crontab -l 2>/dev/null || true)
+# تابع برای اضافه کردن cron jobs
+add_cron_job() {
+  echo "Adding cron jobs..."
+  
+  add_cron_job_if_not_exists() {
+    local cron_job="$1"
+    local current_crontab
+  
+    # Normalize the cron job formatting (remove extra spaces)
+    cron_job=$(echo "$cron_job" | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')
+  
+    # Check if the cron job already exists in the current user's crontab
+    current_crontab=$(crontab -l 2>/dev/null || true)
+  
+    if [[ -z "$current_crontab" ]]; then
+      # No existing crontab, so add the new cron job
+      (echo "$cron_job") | crontab -
+    elif ! (echo "$current_crontab" | grep -Fq "$cron_job"); then
+      # Cron job doesn't exist, so append it to the crontab
+      (echo "$current_crontab"; echo "$cron_job") | crontab -
+    fi
+  }
+  
+  # Add cron job for reboot
+  add_cron_job_if_not_exists "@reboot cd $install_dir && $VENV_DIR/bin/python $install_dir/hiddifyTelegramBot.py >>$install_dir/bot.log 2>&1 &"
+  
+  # Add cron job to run every 6 hours
+  add_cron_job_if_not_exists "0 */6 * * * cd $install_dir && $VENV_DIR/bin/python $install_dir/crontab.py --backup >>$install_dir/cron.log 2>&1"
+  
+  # Add cron job to run at 12:00 PM daily
+  add_cron_job_if_not_exists "0 12 * * * cd $install_dir && $VENV_DIR/bin/python $install_dir/crontab.py --reminder >>$install_dir/cron.log 2>&1"
+  
+  echo "Cron jobs added successfully"
+}
 
-  if [[ -z "$current_crontab" ]]; then
-    # No existing crontab, so add the new cron job
-    (echo "$cron_job") | crontab -
-  elif ! (echo "$current_crontab" | grep -Fq "$cron_job"); then
-    # Cron job doesn't exist, so append it to the crontab
-    (echo "$current_crontab"; echo "$cron_job") | crontab -
+# بعد از نصب سرویس را اضافه می‌کند
+finalize_installation() {
+  echo "Step 5: Running the bot in the background..."
+  setup_systemd_service
+  
+  echo "Step 6: Adding cron jobs..."
+  add_cron_job
+  
+  echo "Waiting for a few seconds..."
+  sleep 3
+  
+  # Check service status
+  service_status=$(systemctl is-active hiddify-telegram-bot)
+  if [[ "$service_status" == "active" ]]; then
+    echo "The bot has been started successfully."
+    echo "Send [/start] in Telegram bot."
+  else
+    echo "WARNING: The bot service is not running properly."
+    echo "Check the logs with: journalctl -u hiddify-telegram-bot -f"
   fi
 }
 
-# Add cron job for reboot
-add_cron_job_if_not_exists "@reboot cd $install_dir && source $VENV_DIR/bin/activate && ./restart.sh"
-
-# Add cron job to run every 6 hours
-add_cron_job_if_not_exists "0 */6 * * * cd $install_dir && source $VENV_DIR/bin/activate && python3 crontab.py --backup"
-
-# Add cron job to run at 12:00 PM daily
-add_cron_job_if_not_exists "0 12 * * * cd $install_dir && source $VENV_DIR/bin/activate && python3 crontab.py --reminder"
-
-echo -e "${GREEN}Waiting for a few seconds...${RESET}"
-sleep 5
-
-if pgrep -f "python3 hiddifyTelegramBot.py" >/dev/null; then
-  echo -e "${GREEN}The bot has been started successfully.${RESET}"
-  echo -e "${GREEN}Send [/start] in Telegram bot.${RESET}"
-else
-  display_error_and_exit "Failed to start the bot. Please check for errors and try again."
-fi
+# در انتهای اسکریپت
+finalize_installation
