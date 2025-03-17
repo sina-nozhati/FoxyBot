@@ -24,6 +24,7 @@ RECEIPTIONS_LOC = os.path.join(os.getcwd(), "UserBot", "Receiptions")
 BOT_BACKUP_LOC = os.path.join(os.getcwd(), "Backup", "Bot")
 API_PATH = "/api/v2"
 HIDY_BOT_ID = "@HidyBotGroup"
+PROXY_PATH = None  # Will be set in set_config_variables function
 
 # if directories not exists, create it
 if not os.path.exists(LOG_DIR):
@@ -96,7 +97,7 @@ def set_config_variables(configs, server_url):
         print(colored("Config is not set! , Please run config.py first", "red"))
         raise Exception(f"Config is not set!\nBe in touch with {HIDY_BOT_ID}")
 
-    global ADMINS_ID, TELEGRAM_TOKEN, PANEL_URL, LANG, PANEL_ADMIN_ID, CLIENT_TOKEN
+    global ADMINS_ID, TELEGRAM_TOKEN, PANEL_URL, LANG, PANEL_ADMIN_ID, CLIENT_TOKEN, PROXY_PATH
     json_admin_ids = configs["bot_admin_id"]
     ADMINS_ID = json.loads(json_admin_ids)
     TELEGRAM_TOKEN = configs["bot_token_admin"]
@@ -121,6 +122,7 @@ def set_config_variables(configs, server_url):
     try:
         proxy_path, api_key = parse_panel_url(PANEL_URL)
         PANEL_ADMIN_ID = api_key  # Set the admin ID to the API key
+        PROXY_PATH = proxy_path  # Set the proxy path
         
         print(colored(f"Successfully parsed panel URL:", "green"))
         print(colored(f"Base URL: {base_url}", "green"))
