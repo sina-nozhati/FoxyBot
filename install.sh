@@ -57,6 +57,8 @@ install_python3_and_pip_if_needed() {
         curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
         python3 get-pip.py --force-reinstall
         rm get-pip.py
+        # نصب setuptools
+        python3 -m pip install --upgrade setuptools
       elif [ "$ID" == "centos" ] || [ "$ID" == "rhel" ]; then
         sudo yum install -y python3 python3-pip python3-devel gcc python3-setuptools python3-wheel
       fi
