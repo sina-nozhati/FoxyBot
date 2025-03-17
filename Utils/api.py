@@ -4,6 +4,7 @@ import os
 from requests.exceptions import HTTPError
 from urllib.parse import urlparse
 from datetime import datetime
+from termcolor import colored
 
 # This will be set from config.py
 HIDDIFY_PANEL_URL = ""
@@ -24,29 +25,49 @@ def parse_panel_url(url):
     if not url:
         raise ValueError("Panel URL cannot be empty")
     
-    # Remove trailing slashes
-    url = url.rstrip("/")
+    # Remove trailing and leading whitespace and slashes
+    url = url.strip().rstrip("/")
     
     # Parse URL
-    parsed_url = urlparse(url)
-    
-    # Check if URL has scheme and netloc
-    if not parsed_url.scheme or not parsed_url.netloc:
-        raise ValueError("Invalid panel URL format. URL must include scheme (http/https) and domain")
-    
-    # Extract path parts (removing empty strings)
-    path_parts = [part for part in parsed_url.path.split("/") if part]
-    
-    # Debug
-    print(f"URL: {url}")
-    print(f"Path parts: {path_parts}")
-    
-    # Path should have at least 2 parts
-    if len(path_parts) >= 2:
-        proxy_path = path_parts[0]  # 7frgemkvtE0
-        api_key = path_parts[1]     # 78854985-68dp-425c-989b-7ap0c6kr9bd4
-        return proxy_path, api_key
-    else:
+    try:
+        parsed_url = urlparse(url)
+        
+        # Check if URL has scheme and netloc
+        if not parsed_url.scheme or not parsed_url.netloc:
+            # Try to add scheme if missing
+            if not parsed_url.scheme and parsed_url.netloc:
+                url = "https://" + url
+                parsed_url = urlparse(url)
+            else:
+                raise ValueError("Invalid panel URL format. URL must include scheme (http/https) and domain")
+        
+        # Extract path parts (removing empty strings)
+        path_parts = [part for part in parsed_url.path.split("/") if part]
+        
+        # Debug information
+        print(f"URL: {url}")
+        print(f"Path parts: {path_parts}")
+        
+        # Path should have at least 2 parts
+        if len(path_parts) >= 2:
+            proxy_path = path_parts[0]  # 7frgemkvtE0
+            api_key = path_parts[1]     # 78854985-68dp-425c-989b-7ap0c6kr9bd4
+            return proxy_path, api_key
+        elif len(path_parts) == 1 and path_parts[0]:
+            # If only one part in path, try to use it as proxy_path and ask for api_key
+            proxy_path = path_parts[0]
+            print(colored(f"Only one path component found: {proxy_path}", "yellow"))
+            print(colored("Please manually enter API key:", "yellow"))
+            api_key = input("[+] Enter API key: ")
+            if not api_key:
+                raise ValueError("API key cannot be empty")
+            return proxy_path, api_key
+        else:
+            raise ValueError("Invalid panel URL format. Expected format: https://panel.example.com/proxy_path/api_key")
+    except Exception as e:
+        # Useful debugging information
+        print(colored(f"Error parsing URL: {url}", "red"))
+        print(colored(f"Error details: {str(e)}", "red"))
         raise ValueError("Invalid panel URL format. Expected format: https://panel.example.com/proxy_path/api_key")
 
 def get_users(proxy_path, api_key):

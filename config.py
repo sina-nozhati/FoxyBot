@@ -302,13 +302,20 @@ if __name__ == '__main__':
             set_config_in_db(db, admin_ids, token, url, lang, client_token)
             conf = load_config(db)
             server_url = load_server_url(db)
-            set_config_variables(conf, server_url)
     else:
         admin_ids, token, url, lang, client_token = set_by_user()
         set_config_in_db(db, admin_ids, token, url, lang, client_token)
         conf = load_config(db)
         server_url = load_server_url(db)
-    set_config_variables(conf, server_url)
+        
+    try:
+        set_config_variables(conf, server_url)
+        print(colored("Configuration successfully loaded.", "green"))
+    except Exception as e:
+        print(colored(f"Error: {str(e)}", "red"))
+        print(colored("Please restart the config.py script and try again.", "yellow"))
+        sys.exit(1)
+        
     # close database connection
     db.close()
 else:
@@ -316,6 +323,13 @@ else:
     db = UserDBManager(USERS_DB_LOC)
     conf = load_config(db)
     server_url = load_server_url(db)
-    set_config_variables(conf, server_url)
+    
+    try:
+        set_config_variables(conf, server_url)
+    except Exception as e:
+        print(colored(f"Error: {str(e)}", "red"))
+        print(colored("Please make sure config.py has been run at least once to set up the configuration.", "yellow"))
+        # در اینجا exception را دوباره raise نمی‌کنیم تا برنامه بتواند ادامه یابد
+    
     db.close()
 
