@@ -99,22 +99,18 @@ def set_config_variables(configs, server_url):
     PANEL_URL = server_url
     LANG = configs["bot_lang"]
     
-    # اصلاح استخراج PANEL_ADMIN_ID
+    # Parse URL and extract admin ID
     try:
         parsed_url = urlparse(PANEL_URL)
-        path_parts = [p for p in parsed_url.path.split('/') if p]
+        path_parts = parsed_url.path.strip('/').split('/')
         if len(path_parts) >= 2:
             PANEL_ADMIN_ID = path_parts[1]
         else:
-            print(colored("Invalid panel URL format. URL should contain proxy_path and API key.", "red"))
+            print(colored("Invalid panel URL format!", "red"))
             raise Exception(f"Invalid panel URL format!\nBe in touch with {HIDY_BOT_ID}")
     except Exception as e:
         print(colored(f"Error parsing panel URL: {str(e)}", "red"))
         raise Exception(f"Error parsing panel URL!\nBe in touch with {HIDY_BOT_ID}")
-
-    if not PANEL_ADMIN_ID:
-        print(colored("Admin panel UUID is not valid!", "red"))
-        raise Exception(f"Admin panel UUID is not valid!\nBe in touch with {HIDY_BOT_ID}")
 
 def panel_url_validator(url):
     """Validate Hiddify panel URL format and connectivity"""
@@ -122,19 +118,22 @@ def panel_url_validator(url):
         # Remove trailing slashes
         url = url.rstrip("/")
         
-        # Split URL into parts
-        parts = url.split("/")
-        
-        # Check if URL has at least 2 parts (base URL and proxy_path)
-        if len(parts) < 4:
-            print(colored("Invalid panel URL format. URL should contain base URL, proxy_path and API key.", "red"))
-            print(colored("Example: https://panel.example.com/7frgemkvtE0/78854985-68dp-425c-989b-7ap0c6kr9bd4", "yellow"))
+        # Parse URL
+        parsed_url = urlparse(url)
+        if not parsed_url.scheme or not parsed_url.netloc:
+            print("Invalid panel URL format. URL must include scheme (http/https) and domain.")
+            return False
+            
+        # Split path into parts
+        path_parts = parsed_url.path.strip('/').split('/')
+        if len(path_parts) < 2:
+            print("Invalid panel URL format. URL must include proxy_path and API key.")
             return False
             
         # Get base URL, proxy_path and api_key
-        base_url = "/".join(parts[:-2])
-        proxy_path = parts[-2]
-        api_key = parts[-1]
+        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+        proxy_path = path_parts[0]
+        api_key = path_parts[1]
         
         # Set base URL for API calls
         set_panel_url(base_url)
@@ -143,18 +142,18 @@ def panel_url_validator(url):
         try:
             result = ping_panel(proxy_path, api_key)
             if "error" in result:
-                print(colored(f"Error connecting to panel: {result['error']}", "red"))
-                print(colored(f"Please check if the URL is correct: {base_url}/{proxy_path}/api/v2/panel/ping/", "yellow"))
+                print(f"Error connecting to panel: {result['error']}")
+                print(f"Please check if the URL is correct: {base_url}/{proxy_path}/api/v2/panel/ping/")
                 return False
-            print(colored("Successfully connected to panel!", "green"))
+            print("Successfully connected to panel!")
             return True
         except Exception as e:
-            print(colored(f"Error connecting to panel: {str(e)}", "red"))
-            print(colored(f"Please check if the URL is correct: {base_url}/{proxy_path}/api/v2/panel/ping/", "yellow"))
+            print(f"Error connecting to panel: {str(e)}")
+            print(f"Please check if the URL is correct: {base_url}/{proxy_path}/api/v2/panel/ping/")
             return False
             
     except Exception as e:
-        print(colored(f"Invalid panel URL: {e}", "red"))
+        print(f"Invalid panel URL: {e}")
         return False
 
 def bot_token_validator(token):
