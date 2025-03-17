@@ -20,23 +20,31 @@ def parse_panel_url(url):
     Example: https://panel.example.com/7frgemkvtE0/78854985-68dp-425c-989b-7ap0c6kr9bd4
     Returns: proxy_path, api_key
     """
+    # Check if URL is empty
+    if not url:
+        raise ValueError("Panel URL cannot be empty")
+    
     # Remove trailing slashes
     url = url.rstrip("/")
     
     # Parse URL
     parsed_url = urlparse(url)
     
+    # Check if URL has scheme and netloc
+    if not parsed_url.scheme or not parsed_url.netloc:
+        raise ValueError("Invalid panel URL format. URL must include scheme (http/https) and domain")
+    
     # Extract path parts (removing empty strings)
     path_parts = [part for part in parsed_url.path.split("/") if part]
+    
+    # Debug
+    print(f"URL: {url}")
+    print(f"Path parts: {path_parts}")
     
     # Path should have at least 2 parts
     if len(path_parts) >= 2:
         proxy_path = path_parts[0]  # 7frgemkvtE0
         api_key = path_parts[1]     # 78854985-68dp-425c-989b-7ap0c6kr9bd4
-
-        print(proxy_path)
-        print(api_key)
-        print(parsed_url)
         return proxy_path, api_key
     else:
         raise ValueError("Invalid panel URL format. Expected format: https://panel.example.com/proxy_path/api_key")
