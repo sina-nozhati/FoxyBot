@@ -20,13 +20,19 @@ def parse_panel_url(url):
     Example: https://panel.example.com/7frgemkvtE0/78854985-68dp-425c-989b-7ap0c6kr9bd4
     Returns: proxy_path, api_key
     """
-    # Remove trailing slashes and split by /
-    parts = url.rstrip("/").split("/")
+    # Remove trailing slashes
+    url = url.rstrip("/")
     
-    # The last two parts should be proxy_path and api_key
-    if len(parts) >= 2:
-        proxy_path = parts[-2]  # 7frgemkvtE0
-        api_key = parts[-1]     # 78854985-68dp-425c-989b-7ap0c6kr9bd4
+    # Parse URL
+    parsed_url = urlparse(url)
+    
+    # Extract path parts (removing empty strings)
+    path_parts = [part for part in parsed_url.path.split("/") if part]
+    
+    # Path should have at least 2 parts
+    if len(path_parts) >= 2:
+        proxy_path = path_parts[0]  # 7frgemkvtE0
+        api_key = path_parts[1]     # 78854985-68dp-425c-989b-7ap0c6kr9bd4
         return proxy_path, api_key
     else:
         raise ValueError("Invalid panel URL format. Expected format: https://panel.example.com/proxy_path/api_key")
