@@ -73,7 +73,18 @@ def load_server_url(db):
         panel_url = db.select_servers()
         if not panel_url:
             return None
-        return panel_url[0]['url']
+        
+        # Get the URL from database
+        url = panel_url[0]['url']
+        
+        # Ensure URL has scheme
+        if url and not url.startswith(('http://', 'https://')):
+            url = 'https://' + url
+            # Update in database
+            db.edit_server(panel_url[0]['id'], url=url)
+            print(colored(f"URL updated with scheme: {url}", "green"))
+            
+        return url
     except Exception as e:
         logging.error(f"Error while loading panel_url \n Error:{e}")
         raise Exception(f"Error while loading panel_url \nBe in touch with {HIDY_BOT_ID}")
@@ -250,6 +261,10 @@ def set_by_user():
 
 def set_config_in_db(db, admin_ids, token, url, lang, client_token):
     try:
+        # Ensure URL has scheme
+        if url and not url.startswith(('http://', 'https://')):
+            url = 'https://' + url
+        
         # if str_config is not exists, create it
         if not db.select_str_config():
             db.add_str_config("bot_admin_id", value=json.dumps(admin_ids))
