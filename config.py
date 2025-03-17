@@ -238,14 +238,20 @@ def set_by_user():
 
     print()
     print(colored("Example: https://panel.example.com/7frgemkvtE0/78854985-68dp-425c-989b-7ap0c6kr9bd4\n[exactly like this!]", "yellow"))
+    panel_url = None
     while True:
         url = input("[+] Enter your panel URL:")
         if not url:
             print(colored("URL is required!", "red"))
             continue
-        url = panel_url_validator(url)
-        if not url:
+        
+        # ذخیره URL اصلی
+        panel_url = url
+        
+        # اعتبارسنجی URL
+        if not panel_url_validator(url):
             continue
+        
         break
 
     print()
@@ -257,7 +263,8 @@ def set_by_user():
             continue
         break
 
-    return admin_ids, token, url, lang, client_token
+    # برگرداندن URL اصلی به جای نتیجه اعتبارسنجی
+    return admin_ids, token, panel_url, lang, client_token
 
 def set_config_in_db(db, admin_ids, token, url, lang, client_token):
     try:
