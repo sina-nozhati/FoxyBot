@@ -105,30 +105,44 @@ def set_config_variables(configs, server_url):
     PANEL_ADMIN_ID = PANEL_ADMIN_ID[0][0]
 
 def panel_url_validator(url):
-    if not (url.startswith("https://") or url.startswith("http://")):
-        print(colored("URL must start with http:// or https://", "red"))
-        return False
-    if url.endswith("/"):
-        url = url[:-1]
-    if url.endswith("admin"):
-        url = url.replace("/admin", "")
-    if url.endswith("admin/user"):
-        url = url.replace("/admin/user", "")
-    print(colored("Checking URL...", "yellow"))
+    """Validate Hiddify panel URL format and connectivity"""
     try:
-        request = requests.get(f"{url}/admin/")
-    except requests.exceptions.ConnectionError as e:
-        print(colored("URL is not valid! Error in connection", "red"))
-        print(colored(f"Error: {e}", "red"))
+        # Remove trailing slashes
+        url = url.rstrip("/")
+        
+        # Split URL into parts
+        parts = url.split("/")
+        
+        # Check if URL has at least 2 parts (base URL and proxy_path)
+        if len(parts) < 4:
+            print("Invalid panel URL format. URL should contain base URL, proxy_path and API key.")
+            return False
+            
+        # Get base URL, proxy_path and api_key
+        base_url = "/".join(parts[:-2])
+        proxy_path = parts[-2]
+        api_key = parts[-1]
+        
+        # Set base URL for API calls
+        set_panel_url(base_url)
+        
+        # Test connection to panel
+        try:
+            result = ping_panel(proxy_path, api_key)
+            if "error" in result:
+                print(f"Error connecting to panel: {result['error']}")
+                print(f"Please check if the URL is correct: {base_url}/{proxy_path}/api/v2/panel/ping/")
+                return False
+            print("Successfully connected to panel!")
+            return True
+        except Exception as e:
+            print(f"Error connecting to panel: {str(e)}")
+            print(f"Please check if the URL is correct: {base_url}/{proxy_path}/api/v2/panel/ping/")
+            return False
+            
+    except Exception as e:
+        print(f"Invalid panel URL: {e}")
         return False
-    
-    if request.status_code != 200:
-        print(colored("URL is not valid!", "red"))
-        print(colored(f"Error: {request.status_code}", "red"))
-        return False
-    elif request.status_code == 200:
-        print(colored("URL is valid!", "green"))
-    return url
 
 def bot_token_validator(token):
     print(colored("Checking Bot Token...", "yellow"))
