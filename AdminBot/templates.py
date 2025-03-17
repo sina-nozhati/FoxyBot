@@ -1,7 +1,9 @@
 # Description: This file contains all the templates used in the bot.
+import os
 from config import LANG, VERSION, API_PATH
 from AdminBot.content import MESSAGES
 from Utils import api, utils 
+from config import HIDY_BOT_ID
 import datetime
 import urllib.parse
 
@@ -32,14 +34,29 @@ def user_info_template(usr, server, header=""):
 def server_info_template(server, plans, header=""):
     plans_num = 0
     user_index = 0
-    URL = server['url'] + API_PATH
-    users_list = api.select(URL)
-    if users_list:
-        user_index = len(users_list)
+    
+    # بهبود در نحوه ساخت URL
+    if not server['url'].endswith('/'):
+        full_url = f"{server['url']}/{API_PATH.lstrip('/')}"
+    else:
+        full_url = f"{server['url']}{API_PATH.lstrip('/')}"
+    
+    # اضافه کردن لاگ
+    print(f"Fetching users for server {server['title']} with URL: {full_url}")
+    
+    try:
+        users_list = api.select(full_url)
+        if users_list:
+            user_index = len(users_list)
+    except Exception as e:
+        print(f"Error fetching users: {str(e)}")
+        # در صورت خطا، تعداد کاربران را 0 در نظر می‌گیریم
+        user_index = 0
+    
     if plans:
         for plan in plans:
-            if plan['status']:
-                if plan['server_id'] == server['id']:
+            if plan.get('status', False):
+                if plan.get('server_id') == server['id']:
                     plans_num += 1
 
     return f"""

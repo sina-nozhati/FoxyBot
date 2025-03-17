@@ -473,18 +473,71 @@ def get_admin_info(proxy_path, api_key):
         raise e
 
 def get_all_configs(proxy_path, api_key):
-    """Get all panel configurations"""
+    """Get all configs from panel"""
+    url = f"{HIDDIFY_PANEL_URL}/{proxy_path}/api/v2/admin/configs"
     headers = {"Hiddify-API-Key": api_key}
+    response = requests.get(url, headers=headers)
     try:
-        response = requests.get(
-            f"{HIDDIFY_PANEL_URL}/{proxy_path}/api/v2/admin/all-configs/",
-            headers=headers
-        )
         response.raise_for_status()
         return response.json()
     except HTTPError as e:
-        if e.response.status_code == 401:
-            raise HTTPError("خطای احراز هویت! کلید API نامعتبر است.")
-        elif e.response.status_code == 404:
-            raise HTTPError("مسیر API یافت نشد! لطفا URL پنل را بررسی کنید.")
-        raise e
+        return {"error": str(e)}
+    except Exception as e:
+        return {"error": str(e)}
+
+def select(url=None):
+    """
+    Get list of users from panel API, using full URL
+    This is a wrapper function for get_users that accepts a full URL
+    """
+    print(f"Making API call to get users with URL: {url}")
+    
+    try:
+        if not url:
+            return []
+            
+        # Remove trailing slash if present
+        url = url.rstrip('/')
+        
+        # استخراج proxy_path و api_key از URL پنل
+        parsed_url = urlparse(url)
+        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+        path_parts = [part for part in parsed_url.path.split("/") if part]
+        
+        # قسمت مربوط به API را جدا می‌کنیم
+        api_path = None
+        if '/api/v2' in url:
+            # اگر URL حاوی api/v2 باشد، مسیر API را جدا می‌کنیم
+            api_index = path_parts.index('api')
+            api_path = '/'.join(path_parts[api_index:])
+            proxy_path = path_parts[0] if len(path_parts) > 0 else None
+        else:
+            # در غیر این صورت فرض می‌کنیم اولین بخش مسیر، proxy_path است
+            proxy_path = path_parts[0] if len(path_parts) > 0 else None
+            api_path = 'api/v2/admin/user'
+        
+        # ساختن URL نهایی برای درخواست
+        final_url = f"{base_url}/{proxy_path}/{api_path}"
+        print(f"Final URL for API call: {final_url}")
+        
+        # پیدا کردن api_key برای استفاده در هدر
+        if len(path_parts) >= 2:
+            api_key = path_parts[1]
+            headers = {"Hiddify-API-Key": api_key}
+            
+            # ارسال درخواست با هدر مناسب
+            response = requests.get(final_url, headers=headers)
+            response.raise_for_status()
+            
+            # پردازش پاسخ
+            data = response.json()
+            if 'users' in data:
+                return data['users']
+            else:
+                return data
+        else:
+            print("API key not found in URL path")
+            return []
+    except Exception as e:
+        print(f"Error in select API call: {str(e)}")
+        return []

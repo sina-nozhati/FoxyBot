@@ -1562,12 +1562,29 @@ def callback_query(call: CallbackQuery):
             bot.send_message(call.message.chat.id, MESSAGES['ERROR_SERVER_NOT_FOUND'])
             return
         server = server[0]
-        URL = server['url'] + API_PATH
+        
+        # اضافه کردن لاگ بررسی
+        print(f"Server selected: {server['title']} with URL: {server['url']}")
+        logging.info(f"Server selected: {server['title']} with URL: {server['url']}")
+        
+        # بهبود نحوه ساخت URL
+        if not server['url'].endswith('/'):
+            URL = f"{server['url']}/{API_PATH.lstrip('/')}"
+        else:
+            URL = f"{server['url']}{API_PATH.lstrip('/')}"
+            
         selected_server = server
-        plans = USERS_DB.select_plans()
-        msg = templates.server_info_template(server,plans)
-        bot.edit_message_text(msg, call.message.chat.id, call.message.message_id,
-                                    reply_markup=markups.server_selected_markup(value))
+        
+        try:
+            plans = USERS_DB.select_plans()
+            msg = templates.server_info_template(server, plans)
+            bot.edit_message_text(msg, call.message.chat.id, call.message.message_id,
+                                  reply_markup=markups.server_selected_markup(value))
+        except Exception as e:
+            # اضافه کردن گزارش خطا
+            print(f"Error in server_selected: {str(e)}")
+            logging.error(f"Error in server_selected: {str(e)}")
+            bot.send_message(call.message.chat.id, f"خطا در دریافت اطلاعات سرور: {str(e)}")
 
     # Server Management - Add Server Callback
     elif key == "add_server":
