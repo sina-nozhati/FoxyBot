@@ -52,13 +52,7 @@ install_python3_and_pip_if_needed() {
       source /etc/os-release
       if [ "$ID" == "ubuntu" ] || [ "$ID" == "debian" ]; then
         sudo apt update
-        sudo apt install -y python3 python3-pip python3-dev build-essential python3-setuptools python3-wheel
-        # نصب pip با استفاده از get-pip.py
-        curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-        python3 get-pip.py --force-reinstall
-        rm get-pip.py
-        # نصب setuptools
-        python3 -m pip install --upgrade setuptools
+        sudo apt install -y python3 python3-pip python3-dev build-essential python3-setuptools python3-wheel python3-venv python3-full
       elif [ "$ID" == "centos" ] || [ "$ID" == "rhel" ]; then
         sudo yum install -y python3 python3-pip python3-devel gcc python3-setuptools python3-wheel
       fi
@@ -115,6 +109,13 @@ cd "$install_dir" || display_error_and_exit "Failed to change directory."
 
 echo -e "${GREEN}Step 2: Installing requirements...${RESET}"
 
+# ایجاد محیط مجازی
+VENV_DIR="$install_dir/venv"
+python3 -m venv "$VENV_DIR" || display_error_and_exit "Failed to create virtual environment."
+
+# فعال‌سازی محیط مجازی
+source "$VENV_DIR/bin/activate" || display_error_and_exit "Failed to activate virtual environment."
+
 # نصب pip به‌روز
 python3 -m pip install --upgrade pip
 
@@ -156,10 +157,10 @@ chmod +x "$install_dir/restart.sh"
 chmod +x "$install_dir/update.sh"
 
 echo -e "${GREEN}Step 4: Running config.py to generate config.json...${RESET}"
-python3 config.py || display_error_and_exit "Failed to run config.py."
+"$VENV_DIR/bin/python3" config.py || display_error_and_exit "Failed to run config.py."
 
 echo -e "${GREEN}Step 5: Running the bot in the background...${RESET}"
-nohup python3 hiddifyTelegramBot.py >>$install_dir/bot.log 2>&1 &
+nohup "$VENV_DIR/bin/python3" hiddifyTelegramBot.py >>$install_dir/bot.log 2>&1 &
 
 echo -e "${GREEN}Step 6: Adding cron jobs...${RESET}"
 
@@ -183,13 +184,13 @@ add_cron_job_if_not_exists() {
 }
 
 # Add cron job for reboot
-add_cron_job_if_not_exists "@reboot cd $install_dir && ./restart.sh"
+add_cron_job_if_not_exists "@reboot cd $install_dir && source $VENV_DIR/bin/activate && ./restart.sh"
 
 # Add cron job to run every 6 hours
-add_cron_job_if_not_exists "0 */6 * * * cd $install_dir && python3 crontab.py --backup"
+add_cron_job_if_not_exists "0 */6 * * * cd $install_dir && source $VENV_DIR/bin/activate && python3 crontab.py --backup"
 
 # Add cron job to run at 12:00 PM daily
-add_cron_job_if_not_exists "0 12 * * * cd $install_dir && python3 crontab.py --reminder"
+add_cron_job_if_not_exists "0 12 * * * cd $install_dir && source $VENV_DIR/bin/activate && python3 crontab.py --reminder"
 
 echo -e "${GREEN}Waiting for a few seconds...${RESET}"
 sleep 5
