@@ -1,28 +1,28 @@
-import os
+# Description: Configuration file for the bot
 import json
-import sys
-import getpass
-import requests
-import telebot
-from termcolor import colored
-from Utils.api import parse_panel_url, set_panel_url, ping_panel
-from version import __version__
 import logging
+import os
 from urllib.parse import urlparse
+import requests
+from termcolor import colored
+
+# import Utils.utils
+from version import __version__
+
+# PANEL_URL, API_PATH = None, None
 
 # Bypass proxy
 os.environ['no_proxy'] = '*'
 
 VERSION = __version__
 
-# File paths
 USERS_DB_LOC = os.path.join(os.getcwd(), "Database", "hidyBot.db")
 LOG_DIR = os.path.join(os.getcwd(), "Logs")
 LOG_LOC = os.path.join(LOG_DIR, "hidyBot.log")
 BACKUP_LOC = os.path.join(os.getcwd(), "Backup")
 RECEIPTIONS_LOC = os.path.join(os.getcwd(), "UserBot", "Receiptions")
 BOT_BACKUP_LOC = os.path.join(os.getcwd(), "Backup", "Bot")
-API_PATH = "/api/v2"
+API_PATH = "/api/v1"
 HIDY_BOT_ID = "@HidyBotGroup"
 
 # if directories not exists, create it
@@ -41,18 +41,24 @@ logging.basicConfig(handlers=[logging.FileHandler(filename=LOG_LOC,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
+
 def setup_users_db():
+    # global USERS_DB
     try:
         if not os.path.exists(USERS_DB_LOC):
             logging.error(f"Database file not found in {USERS_DB_LOC} directory!")
             with open(USERS_DB_LOC, "w") as f:
                 pass
+        # USERS_DB = Database.dbManager.UserDBManager(USERS_DB_LOC)
     except Exception as e:
         logging.error(f"Error while connecting to database \n Error:{e}")
         raise Exception(f"Error while connecting to database \nBe in touch with {HIDY_BOT_ID}")
+    # return USERS_DB
+
 
 setup_users_db()
 from Database.dbManager import UserDBManager
+
 
 def load_config(db):
     try:
@@ -63,10 +69,12 @@ def load_config(db):
         configs = {}
         for conf in config:
             configs[conf['key']] = conf['value']
+
         return configs
     except Exception as e:
         logging.error(f"Error while loading config \n Error:{e}")
         raise Exception(f"Error while loading config \nBe in touch with {HIDY_BOT_ID}")
+
 
 def load_server_url(db):
     try:
@@ -78,10 +86,12 @@ def load_server_url(db):
         logging.error(f"Error while loading panel_url \n Error:{e}")
         raise Exception(f"Error while loading panel_url \nBe in touch with {HIDY_BOT_ID}")
 
+
 ADMINS_ID, TELEGRAM_TOKEN, CLIENT_TOKEN, PANEL_URL, LANG, PANEL_ADMIN_ID = None, None, None, None, None, None
 
+
 def set_config_variables(configs, server_url):
-    if not configs['bot_admin_id'] and not configs['bot_token_admin'] and not configs['bot_lang'] or not server_url:
+    if not conf['bot_admin_id'] and not conf['bot_token_admin'] and not conf['bot_lang'] or not server_url:
         print(colored("Config is not set! , Please run config.py first", "red"))
         raise Exception(f"Config is not set!\nBe in touch with {HIDY_BOT_ID}")
 
@@ -98,11 +108,13 @@ def set_config_variables(configs, server_url):
         setup_users_db()
     PANEL_URL = server_url
     LANG = configs["bot_lang"]
+    # PANEL_ADMIN_ID = ADMIN_DB.find_admins(uuid=urlparse(PANEL_URL).path.split('/')[2])
     PANEL_ADMIN_ID = urlparse(PANEL_URL).path.split('/')[2]
     if not PANEL_ADMIN_ID:
         print(colored("Admin panel UUID is not valid!", "red"))
         raise Exception(f"Admin panel UUID is not valid!\nBe in touch with {HIDY_BOT_ID}")
     PANEL_ADMIN_ID = PANEL_ADMIN_ID[0][0]
+
 
 def panel_url_validator(url):
     if not (url.startswith("https://") or url.startswith("http://")):
@@ -130,6 +142,7 @@ def panel_url_validator(url):
         print(colored("URL is valid!", "green"))
     return url
 
+
 def bot_token_validator(token):
     print(colored("Checking Bot Token...", "yellow"))
     try:
@@ -141,12 +154,16 @@ def bot_token_validator(token):
         print(colored("Bot Token is not valid!", "red"))
         return False
     elif request.status_code == 200:
+        print(colored("Bot Token is valid!", "green"))
         print(colored("Bot Username:", "green"), "@"+request.json()['result']['username'])
     return True
 
+
 def set_by_user():
     print()
-    print(colored("Example: 123456789\nIf you have more than one admin, split with comma(,)\n[get it from @userinfobot]", "yellow"))
+    print(
+        colored("Example: 123456789\nIf you have more than one admin, split with comma(,)\n[get it from @userinfobot]",
+                "yellow"))
     while True:
         admin_id = input("[+] Enter Telegram Admin Number IDs: ")
         admin_ids = admin_id.split(',')
@@ -156,7 +173,6 @@ def set_by_user():
             continue
         admin_ids = [int(admin_id) for admin_id in admin_ids]
         break
-
     print()
     print(colored("Example: 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ\n[get it from @BotFather]", "yellow"))
     while True:
@@ -171,12 +187,11 @@ def set_by_user():
     print()
     print(colored("You can use the bot as a userbot for your clients!", "yellow"))
     while True:
-        userbot = input("Do you want a Bot for your users? (y/n): ").lower()
+        userbot = input("Do you want a  Bot for your users? (y/n): ").lower()
         if userbot not in ["y", "n"]:
             print(colored("Please enter y or n!", "red"))
             continue
         break
-
     if userbot == "y":
         print()
         print(colored("Example: 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ\n[get it from @BotFather]", "yellow"))
@@ -193,9 +208,10 @@ def set_by_user():
             break
     else:
         client_token = None
-
     print()
-    print(colored("Example: https://panel.example.com/7frgemkvtE0/78854985-68dp-425c-989b-7ap0c6kr9bd4\n[exactly like this!]", "yellow"))
+    print(colored(
+        "Example: https://panel.example.com/7frgemkvtE0/78854985-68dp-425c-989b-7ap0c6kr9bd4\n[exactly like this!]",
+        "yellow"))
     while True:
         url = input("[+] Enter your panel URL:")
         if not url:
@@ -205,9 +221,9 @@ def set_by_user():
         if not url:
             continue
         break
-
     print()
-    print(colored("Example: EN (default: FA)\n[It is better that the language of the bot is the same as the panel]", "yellow"))
+    print(colored("Example: EN (default: FA)\n[It is better that the language of the bot is the same as the panel]",
+                  "yellow"))
     while True:
         lang = input("[+] Select your language (EN(English), FA(Persian)): ") or "FA"
         if lang not in ["EN", "FA"]:
@@ -216,6 +232,7 @@ def set_by_user():
         break
 
     return admin_ids, token, url, lang, client_token
+
 
 def set_config_in_db(db, admin_ids, token, url, lang, client_token):
     try:
@@ -230,7 +247,6 @@ def set_config_in_db(db, admin_ids, token, url, lang, client_token):
             db.edit_str_config("bot_token_admin", value=token)
             db.edit_str_config("bot_token_client", value=client_token)
             db.edit_str_config("bot_lang", value=lang)
-
         # if servers is not exists, create it
         if not db.select_servers():
             db.add_server(url, 2000, title="Main Server", default_server=True)
@@ -248,6 +264,7 @@ def set_config_in_db(db, admin_ids, token, url, lang, client_token):
         logging.error(f"Error while inserting config to database \n Error:{e}")
         raise Exception(f"Error while inserting config to database \nBe in touch with {HIDY_BOT_ID}")
 
+
 def print_current_conf(conf, server_url):
     print()
     print(colored("Current configration data:", "yellow"))
@@ -257,6 +274,7 @@ def print_current_conf(conf, server_url):
     print(f"[+] Panel URL: {server_url}")
     print(f"[+] Language: {conf['bot_lang']}")
     print()
+
 
 if __name__ == '__main__':
     db = UserDBManager(USERS_DB_LOC)
@@ -281,11 +299,9 @@ if __name__ == '__main__':
     # close database connection
     db.close()
 
-# Initialize database and load config
 db = UserDBManager(USERS_DB_LOC)
 db.set_default_configs()
 conf = load_config(db)
 server_url = load_server_url(db)
 set_config_variables(conf, server_url)
 db.close()
-
