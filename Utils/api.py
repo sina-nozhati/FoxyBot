@@ -33,6 +33,10 @@ def parse_panel_url(url):
     if len(path_parts) >= 2:
         proxy_path = path_parts[0]  # 7frgemkvtE0
         api_key = path_parts[1]     # 78854985-68dp-425c-989b-7ap0c6kr9bd4
+
+        print(proxy_path)
+        print(api_key)
+        print(parsed_url)
         return proxy_path, api_key
     else:
         raise ValueError("Invalid panel URL format. Expected format: https://panel.example.com/proxy_path/api_key")
