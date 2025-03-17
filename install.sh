@@ -52,9 +52,13 @@ install_python3_and_pip_if_needed() {
       source /etc/os-release
       if [ "$ID" == "ubuntu" ] || [ "$ID" == "debian" ]; then
         sudo apt update
-        sudo apt install -y python3 python3-pip python3-dev build-essential
+        sudo apt install -y python3 python3-pip python3-dev build-essential python3-setuptools python3-wheel
+        # نصب pip با استفاده از get-pip.py
+        curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+        python3 get-pip.py --force-reinstall
+        rm get-pip.py
       elif [ "$ID" == "centos" ] || [ "$ID" == "rhel" ]; then
-        sudo yum install -y python3 python3-pip python3-devel gcc
+        sudo yum install -y python3 python3-pip python3-devel gcc python3-setuptools python3-wheel
       fi
     elif [ "$(uname -s)" == "Darwin" ]; then # macOS
       brew install python@3
@@ -115,17 +119,14 @@ python3 -m pip install --upgrade pip
 # نصب setuptools و wheel
 python3 -m pip install --upgrade setuptools wheel
 
-# نصب distutils
-python3 -m pip install --upgrade distutils
-
 # نصب پکیج‌های سیستم مورد نیاز
 if [ -f /etc/os-release ]; then
   source /etc/os-release
   if [ "$ID" == "ubuntu" ] || [ "$ID" == "debian" ]; then
     sudo apt update
-    sudo apt install -y python3-dev build-essential libffi-dev python3-distutils
+    sudo apt install -y python3-dev build-essential libffi-dev
   elif [ "$ID" == "centos" ] || [ "$ID" == "rhel" ]; then
-    sudo yum install -y python3-devel gcc libffi-devel python3-distutils
+    sudo yum install -y python3-devel gcc libffi-devel
   fi
 fi
 
