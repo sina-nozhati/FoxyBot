@@ -1,26 +1,18 @@
 {
     "users": [
         {
-            "id": 1,
             "telegram_id": 1439007465,
             "full_name": "Sin \ud83d\udc3e",
             "username": "Thesinpv",
-            "test_subscription": 0,
-            "banned": 0,
-            "created_at": "2025-03-18 12:09:27"
+            "created_at": "2025-03-18 15:08:09",
+            "is_admin": 0,
+            "is_blocked": 0
         }
     ],
     "plans": [],
     "orders": [],
     "order_subscriptions": [],
-    "non_order_subscriptions": [
-        {
-            "id": 75248376,
-            "telegram_id": 1439007465,
-            "uuid": "e4951b9c-34e4-45a5-bbbf-ccf504101dc6",
-            "server_id": 1
-        }
-    ],
+    "non_order_subscriptions": [],
     "str_config": [
         {
             "key": "bot_admin_id",
@@ -148,7 +140,7 @@
         },
         {
             "key": "visible_conf_dir",
-            "value": 1
+            "value": 0
         },
         {
             "key": "visible_conf_sub_auto",
@@ -156,7 +148,7 @@
         },
         {
             "key": "visible_conf_sub_url",
-            "value": 1
+            "value": 0
         },
         {
             "key": "visible_conf_sub_url_b64",
@@ -190,9 +182,11 @@
         {
             "id": 1,
             "url": "https://panel.private.com/GSaIeUm8V40qw08RRvaiS1VJFBV/ad793ef2-d0ab-4665-a3ed-bae391b90287",
+            "proxy_path": null,
+            "api_key": null,
+            "user_limit": 2000,
             "title": "Main Server",
             "description": null,
-            "user_limit": 2000,
             "status": 1,
             "default_server": 1
         }

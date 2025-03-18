@@ -1,0 +1,115 @@
+2025-03-18 15:08:02,660 - root - INFO - User table created successfully!
+2025-03-18 15:08:02,660 - root - INFO - User table created successfully!
+2025-03-18 15:08:09,588 - root - INFO - User 1439007465 (Thesinpv) sent /start command
+2025-03-18 15:08:09,590 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 15:08:09,590 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 15:08:09,595 - root - INFO - User [1439007465] added successfully!
+2025-03-18 15:08:09,595 - root - INFO - Balance {'telegram_id': 1439007465} not found!
+2025-03-18 15:08:09,599 - root - INFO - Balance [1439007465] added successfully!
+2025-03-18 15:08:12,300 - TeleBot - ERROR - Infinity polling exception: 'banned'
+2025-03-18 15:08:12,304 - TeleBot - ERROR - Exception traceback:
+Traceback (most recent call last):
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 955, in infinity_polling
+    self.polling(non_stop=True, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1043, in polling
+    self.__threaded_polling(non_stop=non_stop, interval=interval, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1118, in __threaded_polling
+    raise e
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1074, in __threaded_polling
+    self.worker_pool.raise_exceptions()
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 147, in raise_exceptions
+    raise self.exception_info
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 90, in run
+    task(*args, **kwargs)
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 6788, in _run_middlewares_and_handler
+    result = handler['function'](message)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/Hiddify-Telegram-Bot/UserBot/bot.py", line 1246, in buy_subscription
+    if is_user_banned(message.chat.id):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/Hiddify-Telegram-Bot/UserBot/bot.py", line 76, in is_user_banned
+    if user['banned']:
+       ~~~~^^^^^^^^^^
+KeyError: 'banned'
+
+2025-03-18 15:08:15,254 - root - INFO - User 1439007465 (Thesinpv) sent /start command
+2025-03-18 15:08:15,305 - TeleBot - ERROR - Infinity polling exception: 'banned'
+2025-03-18 15:08:15,308 - TeleBot - ERROR - Exception traceback:
+Traceback (most recent call last):
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 955, in infinity_polling
+    self.polling(non_stop=True, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1043, in polling
+    self.__threaded_polling(non_stop=non_stop, interval=interval, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1118, in __threaded_polling
+    raise e
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1074, in __threaded_polling
+    self.worker_pool.raise_exceptions()
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 147, in raise_exceptions
+    raise self.exception_info
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 90, in run
+    task(*args, **kwargs)
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 6788, in _run_middlewares_and_handler
+    result = handler['function'](message)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/Hiddify-Telegram-Bot/UserBot/bot.py", line 1142, in start_bot
+    if is_user_banned(message.chat.id):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/Hiddify-Telegram-Bot/UserBot/bot.py", line 76, in is_user_banned
+    if user['banned']:
+       ~~~~^^^^^^^^^^
+KeyError: 'banned'
+
+2025-03-18 15:08:17,595 - root - INFO - User 1439007465 (Thesinpv) sent /start command
+2025-03-18 15:08:18,315 - TeleBot - ERROR - Infinity polling exception: 'banned'
+2025-03-18 15:08:18,318 - TeleBot - ERROR - Exception traceback:
+Traceback (most recent call last):
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 955, in infinity_polling
+    self.polling(non_stop=True, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1043, in polling
+    self.__threaded_polling(non_stop=non_stop, interval=interval, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1118, in __threaded_polling
+    raise e
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1074, in __threaded_polling
+    self.worker_pool.raise_exceptions()
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 147, in raise_exceptions
+    raise self.exception_info
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 90, in run
+    task(*args, **kwargs)
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 6788, in _run_middlewares_and_handler
+    result = handler['function'](message)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/Hiddify-Telegram-Bot/UserBot/bot.py", line 1142, in start_bot
+    if is_user_banned(message.chat.id):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/Hiddify-Telegram-Bot/UserBot/bot.py", line 76, in is_user_banned
+    if user['banned']:
+       ~~~~^^^^^^^^^^
+KeyError: 'banned'
+
+2025-03-18 15:08:18,947 - root - INFO - User 1439007465 (Thesinpv) sent /start command
+2025-03-18 15:08:21,323 - TeleBot - ERROR - Infinity polling exception: 'banned'
+2025-03-18 15:08:21,326 - TeleBot - ERROR - Exception traceback:
+Traceback (most recent call last):
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 955, in infinity_polling
+    self.polling(non_stop=True, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1043, in polling
+    self.__threaded_polling(non_stop=non_stop, interval=interval, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1118, in __threaded_polling
+    raise e
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1074, in __threaded_polling
+    self.worker_pool.raise_exceptions()
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 147, in raise_exceptions
+    raise self.exception_info
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 90, in run
+    task(*args, **kwargs)
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 6788, in _run_middlewares_and_handler
+    result = handler['function'](message)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/Hiddify-Telegram-Bot/UserBot/bot.py", line 1142, in start_bot
+    if is_user_banned(message.chat.id):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/Hiddify-Telegram-Bot/UserBot/bot.py", line 76, in is_user_banned
+    if user['banned']:
+       ~~~~^^^^^^^^^^
+KeyError: 'banned'
+

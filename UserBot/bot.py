@@ -73,10 +73,11 @@ def is_user_banned(user_id):
     user = USERS_DB.find_user(telegram_id=user_id)
     if user:
         user = user[0]
-        if user['banned']:
+        if 'banned' in user and user['banned']:
             bot.send_message(user_id, MESSAGES['BANNED_USER'], reply_markup=main_menu_keyboard_markup())
             return True
     return False
+
 # *********************************** Next-Step Handlers ***********************************
 # ----------------------------------- Buy Plan Area -----------------------------------
 charge_wallet = {}

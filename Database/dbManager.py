@@ -49,7 +49,9 @@ class UserDBManager:
                 username TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 is_admin BOOLEAN DEFAULT FALSE,
-                is_blocked BOOLEAN DEFAULT FALSE
+                is_blocked BOOLEAN DEFAULT FALSE,
+                banned BOOLEAN DEFAULT FALSE,
+                test_subscription BOOLEAN DEFAULT FALSE
             )
             """)
 
