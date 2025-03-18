@@ -222,14 +222,21 @@ class UserDBManager:
     def add_user(self, telegram_id, full_name,username, created_at):
         cur = self.conn.cursor()
         try:
+            print(f"Adding user to database: telegram_id={telegram_id}, full_name={full_name}, username={username}, created_at={created_at}")
             cur.execute("INSERT INTO users(telegram_id, full_name,username, created_at) VALUES(?,?,?,?)",
                         (telegram_id, full_name,username, created_at))
             self.conn.commit()
+            print(f"User [{telegram_id}] added successfully!")
             logging.info(f"User [{telegram_id}] added successfully!")
             return True
 
         except Error as e:
+            print(f"Error while adding user [{telegram_id}] \n Error: {e}")
             logging.error(f"Error while adding user [{telegram_id}] \n Error: {e}")
+            if "UNIQUE constraint failed" in str(e):
+                # اگر کاربر قبلاً وجود داشته باشد
+                print(f"User [{telegram_id}] already exists in database")
+                return True
             return False
 
     def add_plan(self, plan_id, size_gb, days, price, server_id, description=None, status=True):
@@ -735,6 +742,24 @@ class UserDBManager:
             cur.close()
 
     def set_default_configs(self):
+        # اطمینان از وجود کاربر ادمین در دیتابیس
+        admin_ids = self.find_str_config(key="bot_admin_id")
+        if admin_ids and admin_ids['value']:
+            try:
+                admin_list = json.loads(admin_ids['value'])
+                for admin_id in admin_list:
+                    if not self.find_user(telegram_id=admin_id):
+                        print(f"Adding admin user {admin_id} to database")
+                        self.add_user(
+                            telegram_id=admin_id,
+                            full_name="Admin",
+                            username="admin",
+                            created_at=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        )
+            except json.JSONDecodeError:
+                print(f"Error parsing admin IDs: {admin_ids['value']}")
+            except Exception as e:
+                print(f"Error adding admin user: {str(e)}")
         
         self.add_bool_config("visible_hiddify_hyperlink", True)
         self.add_bool_config("three_random_num_price", False)

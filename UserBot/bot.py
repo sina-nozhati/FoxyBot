@@ -2,6 +2,7 @@ import datetime
 import random
 import logging
 import os
+from datetime import datetime
 
 
 import telebot
@@ -1159,7 +1160,7 @@ def start_bot(message: Message):
             print(f"Error sending welcome message to user {message.from_user.id}: {e}")
     else:
         print(f"User {message.from_user.id} does not exist in database, adding new user")
-        created_at = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         status = USERS_DB.add_user(telegram_id=message.chat.id,username=message.from_user.username, full_name=message.from_user.full_name, created_at=created_at)
         if not status:
             print(f"Error adding user {message.from_user.id} to database")
@@ -1223,6 +1224,7 @@ def subscription_status(message: Message):
                 api_user_data = user_info_template(non_order_sub['sub_id'], server, non_order_sub, MESSAGES['INFO_USER'])
                 bot.send_message(message.chat.id, api_user_data,
                                  reply_markup=user_info_non_sub_markup(non_order_sub['uuid']))
+
     if order_subs:
         for order_sub in order_subs:
             if order_sub:
@@ -1409,6 +1411,7 @@ def free_test(message: Message):
             #                                   text= MESSAGES['SERVERS_LIST'], reply_markup=servers_list_markup(server_list))
             bot.delete_message(message.chat.id, msg_wait.message_id)
             bot.send_message(message.chat.id, MESSAGES['SERVERS_LIST'], reply_markup=servers_list_markup(server_list, True))
+
 
 
 

@@ -1,0 +1,122 @@
+2025-03-18 09:48:00,979 - root - INFO - User table created successfully!
+2025-03-18 09:48:00,979 - root - INFO - Plans table created successfully!
+2025-03-18 09:48:00,979 - root - INFO - Orders table created successfully!
+2025-03-18 09:48:00,979 - root - INFO - Order subscriptions table created successfully!
+2025-03-18 09:48:00,979 - root - INFO - Non order subscriptions table created successfully!
+2025-03-18 09:48:00,979 - root - INFO - str_config table created successfully!
+2025-03-18 09:48:00,979 - root - INFO - int_config table created successfully!
+2025-03-18 09:48:00,979 - root - INFO - bool_config table created successfully!
+2025-03-18 09:48:00,979 - root - INFO - wallet table created successfully!
+2025-03-18 09:48:00,979 - root - INFO - Payments table created successfully!
+2025-03-18 09:48:00,979 - root - INFO - Servers table created successfully!
+2025-03-18 09:48:00,980 - root - INFO - User table created successfully!
+2025-03-18 09:48:00,980 - root - INFO - Plans table created successfully!
+2025-03-18 09:48:00,980 - root - INFO - Orders table created successfully!
+2025-03-18 09:48:00,980 - root - INFO - Order subscriptions table created successfully!
+2025-03-18 09:48:00,980 - root - INFO - Non order subscriptions table created successfully!
+2025-03-18 09:48:00,980 - root - INFO - str_config table created successfully!
+2025-03-18 09:48:00,980 - root - INFO - int_config table created successfully!
+2025-03-18 09:48:00,980 - root - INFO - bool_config table created successfully!
+2025-03-18 09:48:00,980 - root - INFO - wallet table created successfully!
+2025-03-18 09:48:00,980 - root - INFO - Payments table created successfully!
+2025-03-18 09:48:00,980 - root - INFO - Servers table created successfully!
+2025-03-18 09:48:07,381 - root - INFO - Callback Query: server_selected:1
+2025-03-18 09:48:07,432 - root - INFO - Server selected: Main Server with URL: https://testbot.sin1990.ir/GSaIeUm8V40qw08RRvaiS1VJFBV/ad793ef2-d0ab-4665-a3ed-bae391b90287
+2025-03-18 09:48:08,765 - root - INFO - Callback Query: server_list_of_users:1
+2025-03-18 09:48:09,161 - root - INFO - Parse users page. Found 2 users.
+2025-03-18 09:48:12,324 - root - INFO - Callback Query: server_search_user:1
+2025-03-18 09:48:14,677 - root - INFO - Callback Query: search_name:1
+2025-03-18 09:48:18,488 - TeleBot - ERROR - Infinity polling exception: 'last_connection'
+2025-03-18 09:48:18,492 - TeleBot - ERROR - Exception traceback:
+Traceback (most recent call last):
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 955, in infinity_polling
+    self.polling(non_stop=True, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1043, in polling
+    self.__threaded_polling(non_stop=non_stop, interval=interval, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1118, in __threaded_polling
+    raise e
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1074, in __threaded_polling
+    self.worker_pool.raise_exceptions()
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 147, in raise_exceptions
+    raise self.exception_info
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 90, in run
+    task(*args, **kwargs)
+  File "/opt/Hiddify-Telegram-Bot/AdminBot/bot.py", line 245, in search_user_name
+    bot.send_message(message.chat.id, templates.users_list_template(users, MESSAGES['SEARCH_RESULT']),
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/Hiddify-Telegram-Bot/AdminBot/templates.py", line 97, in users_list_template
+    if user['last_connection'] == "Online" or user['last_connection'] == "آنلاین":
+       ~~~~^^^^^^^^^^^^^^^^^^^
+KeyError: 'last_connection'
+
+2025-03-18 09:48:21,598 - root - INFO - Callback Query: server_selected:1
+2025-03-18 09:48:21,648 - root - INFO - Server selected: Main Server with URL: https://testbot.sin1990.ir/GSaIeUm8V40qw08RRvaiS1VJFBV/ad793ef2-d0ab-4665-a3ed-bae391b90287
+2025-03-18 09:48:23,356 - root - INFO - Callback Query: server_list_of_users:1
+2025-03-18 09:48:23,487 - root - INFO - Parse users page. Found 2 users.
+2025-03-18 09:48:24,626 - root - INFO - Callback Query: server_add_user:1
+2025-03-18 09:48:40,117 - root - INFO - Get info of user single user - ad2bcb8f-6149-4d6a-bced-ab3bac78784f
+2025-03-18 09:48:40,241 - TeleBot - ERROR - Infinity polling exception: 'remaining_day'
+2025-03-18 09:48:40,243 - TeleBot - ERROR - Exception traceback:
+Traceback (most recent call last):
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 955, in infinity_polling
+    self.polling(non_stop=True, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1043, in polling
+    self.__threaded_polling(non_stop=non_stop, interval=interval, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1118, in __threaded_polling
+    raise e
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1074, in __threaded_polling
+    self.worker_pool.raise_exceptions()
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 147, in raise_exceptions
+    raise self.exception_info
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 90, in run
+    task(*args, **kwargs)
+  File "/opt/Hiddify-Telegram-Bot/AdminBot/bot.py", line 150, in confirm_add_user
+    msg = templates.user_info_template(usr, server, MESSAGES['NEW_USER_INFO'])
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/Hiddify-Telegram-Bot/AdminBot/templates.py", line 15, in user_info_template
+    if usr['remaining_day'] == 0:
+       ~~~^^^^^^^^^^^^^^^^^
+KeyError: 'remaining_day'
+
+2025-03-18 09:49:08,450 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:08,451 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:10,342 - root - INFO - User 1439007465 (Thesinpv) sent /start command
+2025-03-18 09:49:10,343 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:10,343 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:10,355 - TeleBot - ERROR - Infinity polling exception: type object 'datetime.datetime' has no attribute 'datetime'
+2025-03-18 09:49:10,362 - TeleBot - ERROR - Exception traceback:
+Traceback (most recent call last):
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 955, in infinity_polling
+    self.polling(non_stop=True, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1043, in polling
+    self.__threaded_polling(non_stop=non_stop, interval=interval, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1118, in __threaded_polling
+    raise e
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1074, in __threaded_polling
+    self.worker_pool.raise_exceptions()
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 147, in raise_exceptions
+    raise self.exception_info
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 90, in run
+    task(*args, **kwargs)
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 6788, in _run_middlewares_and_handler
+    result = handler['function'](message)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/Hiddify-Telegram-Bot/UserBot/bot.py", line 1162, in start_bot
+    created_at = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                 ^^^^^^^^^^^^^^^^^
+AttributeError: type object 'datetime.datetime' has no attribute 'datetime'
+
+2025-03-18 09:49:13,460 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:13,461 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:13,473 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:13,473 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:13,831 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:13,832 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:14,570 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:14,571 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:15,145 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:15,145 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:16,073 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:16,073 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:16,786 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:49:16,787 - root - INFO - User {'telegram_id': 1439007465} not found!
