@@ -213,6 +213,7 @@ def set_by_user():
     
     print()
     print(colored("You can use the bot as a userbot for your clients!", "yellow"))
+    client_token = None  # تعیین مقدار پیش‌فرض
     while True:
         userbot = input("Do you want a Bot for your users? (y/n): ").lower()
         if userbot not in ["y", "n"]:
@@ -233,9 +234,8 @@ def set_by_user():
                 continue
             if not bot_token_validator(client_token):
                 continue
-                break
-            else:
-                client_token = None
+            # اگر به اینجا رسیدیم، یعنی توکن معتبر است
+            break
     
     print()
     print(colored("Example: https://panel.example.com/7frgemkvtE0/78854985-68dp-425c-989b-7ap0c6kr9bd4\n[exactly like this!]", "yellow"))
