@@ -231,38 +231,110 @@ def user_info(url, uuid):
 
 # Get sub links - return dict of sub links
 def sub_links(uuid, url=None):
-    if not url:
-        non_order_users = USERS_DB.find_non_order_subscription(uuid=uuid)
-        order_users = USERS_DB.find_order_subscription(uuid=uuid)
-        if order_users:
-            order_user = order_users[0]
-            servers = USERS_DB.find_server(id=order_user['server_id'])
-            if servers:
-                server = servers[0]
-                url = server['url']
-        elif non_order_users:
-            non_order_user = non_order_users[0]
-            servers = USERS_DB.find_server(id=non_order_user['server_id'])
-            if servers:
-                server = servers[0]
-                url = server['url']
-                
-    BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-    logging.info(f"Get sub links of user - {uuid}")
-    sub = {}
-    PANEL_DIR = urlparse(url).path.split('/')
-    proxy_path = PANEL_DIR[-2]
+    """
+    دریافت لینک‌های اشتراک کاربر با استفاده از سیستم هوشمند تشخیص مسیر پروکسی
     
-    # Clash open app: clash://install-config?url=
-    # Hidden open app: clashmeta://install-config?url=
+    Args:
+        uuid: UUID کاربر
+        url: آدرس سرور (اختیاری)
+        
+    Returns:
+        dict: لینک‌های اشتراک کاربر
+    """
+    server_id = None
+    telegram_id = None
+    order_id = None
+    subscription_type = None
+    
+    # یافتن اطلاعات اشتراک
+    non_order_users = USERS_DB.find_non_order_subscription(uuid=uuid)
+    order_users = USERS_DB.find_order_subscription(uuid=uuid)
+    
+    if order_users:
+        order_user = order_users[0]
+        server_id = order_user['server_id']
+        order_id = order_user['order_id']
+        subscription_type = 'order'
+        
+        # یافتن telegram_id مربوط به این سفارش
+        orders = USERS_DB.find_order(id=order_id)
+        if orders:
+            telegram_id = orders[0]['telegram_id']
+            
+    elif non_order_users:
+        non_order_user = non_order_users[0]
+        server_id = non_order_user['server_id']
+        telegram_id = non_order_user['telegram_id']
+        subscription_type = 'non_order'
+        
+    # اگر URL به صورت دستی تنظیم نشده باشد، سعی می‌کنیم از دیتابیس بخوانیم
+    if not url and server_id:
+        servers = USERS_DB.find_server(id=server_id)
+        if servers:
+            server = servers[0]
+            url = server['url']
+    
+    # در صورتی که هنوز تلگرام آیدی یافت نشده، از طریق سفارش پیدا کنیم
+    if not telegram_id and order_id:
+        orders = USERS_DB.find_order(id=order_id)
+        if orders:
+            telegram_id = orders[0]['telegram_id']
+    
+    # اگر هیچ اطلاعاتی یافت نشد، برگشت به روش قدیمی
+    if not url or not server_id or not telegram_id or not subscription_type:
+        BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+        logging.info(f"Using old method for sub links - {uuid}")
+        sub = {}
+        PANEL_DIR = urlparse(url).path.split('/')
+        proxy_path = PANEL_DIR[-2] if len(PANEL_DIR) >= 2 else ""
+        
+        # Clash open app: clash://install-config?url=
+        # Hidden open app: clashmeta://install-config?url=
+        sub['clash_configs'] = f"{BASE_URL}/{proxy_path}/{uuid}/clash/all.yml"
+        sub['hiddify_configs'] = f"{BASE_URL}/{proxy_path}/{uuid}/clash/meta/all.yml"
+        sub['sub_link'] = f"{BASE_URL}/{proxy_path}/{uuid}/all.txt"
+        sub['sub_link_b64'] = f"{BASE_URL}/{proxy_path}/{uuid}/all.txt?base64=True"
+        sub['sub_link_auto'] = f"{BASE_URL}/{proxy_path}/{uuid}/auto"
+        sub['sing_box'] = f"{BASE_URL}/{proxy_path}/{uuid}/singbox/config.json"
+        sub['sing_box_full'] = f"{BASE_URL}/{proxy_path}/{uuid}/singbox/full.json"
+        
+        return sub
+    
+    # استفاده از سیستم هوشمند برای دریافت مسیر پروکسی
+    identifier = order_id if subscription_type == 'order' else telegram_id
+    
+    logging.info(f"Getting subscription info for user {telegram_id} with UUID {uuid}")
+    subscription_info = get_user_subscription_info(
+        USERS_DB=USERS_DB,
+        telegram_id=telegram_id,
+        uuid=uuid,
+        subscription_type=subscription_type,
+        identifier=identifier
+    )
+    
+    if not subscription_info:
+        # اگر اطلاعات اشتراک یافت نشد، از روش قدیمی استفاده می‌کنیم
+        logging.warning(f"Could not get subscription info, using old method for {uuid}")
+        BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+        sub = {}
+        PANEL_DIR = urlparse(url).path.split('/')
+        proxy_path = PANEL_DIR[-2] if len(PANEL_DIR) >= 2 else ""
+    else:
+        # استفاده از مسیر پروکسی یافت شده
+        proxy_path = subscription_info['proxy_path']
+        BASE_URL = urlparse(subscription_info['server_url']).scheme + "://" + urlparse(subscription_info['server_url']).netloc
+        logging.info(f"Using smart proxy path {proxy_path} for user {telegram_id} with UUID {uuid}")
+    
+    # ساخت لینک‌های اشتراک
+    sub = {}
     sub['clash_configs'] = f"{BASE_URL}/{proxy_path}/{uuid}/clash/all.yml"
     sub['hiddify_configs'] = f"{BASE_URL}/{proxy_path}/{uuid}/clash/meta/all.yml"
     sub['sub_link'] = f"{BASE_URL}/{proxy_path}/{uuid}/all.txt"
     sub['sub_link_b64'] = f"{BASE_URL}/{proxy_path}/{uuid}/all.txt?base64=True"
-    # Add in v10.0 Hiddify
-    sub['sub_link_auto'] = f"{BASE_URL}/{proxy_path}/{uuid}/sub/?asn=unknown"
-    sub['sing_box_full'] = f"{BASE_URL}/{proxy_path}/{uuid}/full-singbox.json?asn=unknown"
-    sub['sing_box'] = f"{BASE_URL}/{proxy_path}/{uuid}/singbox.json?asn=unknown"
+    sub['sub_link_auto'] = f"{BASE_URL}/{proxy_path}/{uuid}/auto"
+    sub['sing_box'] = f"{BASE_URL}/{proxy_path}/{uuid}/singbox/config.json"
+    sub['sing_box_full'] = f"{BASE_URL}/{proxy_path}/{uuid}/singbox/full.json"
+    
     return sub
 
 
@@ -317,16 +389,10 @@ def backup_panel(url):
         return False
 
     now = datetime.now()
-    dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
-
-    file_name = f"Backup_{urlparse(url,).netloc}_{dt_string}.json"
-
-    file_name = os.path.join(BACKUP_LOC, file_name)
-    if not os.path.exists(BACKUP_LOC):
-        os.makedirs(BACKUP_LOC)
-    with open(file_name, 'w+') as f:
-        f.write(backup_req.text)
-    return file_name
+    file_name = f"backup_{now.strftime('%Y-%m-%d_%H-%M-%S')}.json"
+    with open(os.path.join(BACKUP_LOC, file_name), 'wb') as f:
+        f.write(backup_req.content)
+    return True
 
 # zip an array of files
 def zip_files(files, zip_file_name,path=None):
@@ -781,4 +847,188 @@ def debug_data():
 
     os.remove(bk_json_file)
     return zip_file
+    
+
+def test_proxy_path(server_url, proxy_path, api_key, user_uuid):
+    """
+    تست اعتبار مسیر پروکسی کاربر با تلاش برای دسترسی به کانفیگ‌های کاربر
+    
+    Args:
+        server_url: آدرس سرور
+        proxy_path: مسیر پروکسی کاربر
+        api_key: کلید API
+        user_uuid: UUID کاربر
+        
+    Returns:
+        bool: آیا مسیر معتبر است یا خیر
+    """
+    try:
+        headers = {"Hiddify-API-Key": api_key}
+        
+        # تلاش برای دسترسی به کانفیگ‌های کاربر با مسیر پروکسی
+        response = requests.get(
+            f"{server_url}/{proxy_path}/{user_uuid}/api/v2/user/all-configs/",
+            headers=headers,
+            timeout=10
+        )
+        
+        # بررسی وضعیت پاسخ
+        if response.status_code == 200:
+            return True
+            
+        # اگر مسیر بدون UUID کار کند
+        response = requests.get(
+            f"{server_url}/{proxy_path}/api/v2/user/all-configs/",
+            headers=headers,
+            timeout=10
+        )
+        
+        return response.status_code == 200
+    except:
+        return False
+
+
+def get_user_subscription_info(USERS_DB, telegram_id, uuid, subscription_type, identifier):
+    """
+    دریافت اطلاعات اشتراک کاربر با استفاده از استراتژی هوشمند
+    
+    Args:
+        USERS_DB: شیء دیتابیس
+        telegram_id: شناسه تلگرام کاربر
+        uuid: UUID کاربر
+        subscription_type: نوع اشتراک ('order' یا 'non_order')
+        identifier: شناسه اشتراک (order_id یا telegram_id)
+        
+    Returns:
+        dict: اطلاعات اشتراک کاربر شامل proxy_path و uuid
+    """
+    # یافتن اطلاعات کاربر
+    user = USERS_DB.find_user(telegram_id=telegram_id)
+    if not user:
+        logging.error(f"User {telegram_id} not found in database")
+        return None
+    
+    try:
+        # یافتن سرور مربوط به اشتراک
+        if subscription_type == 'order':
+            order_sub = USERS_DB.find_order_subscription(order_id=identifier)
+            if not order_sub:
+                logging.error(f"Order subscription {identifier} not found")
+                return None
+            server_id = order_sub['server_id']
+        elif subscription_type == 'non_order':
+            non_order_sub = USERS_DB.find_non_order_subscription(telegram_id=identifier, uuid=uuid)
+            if not non_order_sub:
+                logging.error(f"Non-order subscription for user {identifier} with UUID {uuid} not found")
+                return None
+            server_id = non_order_sub['server_id']
+        else:
+            logging.error(f"Invalid subscription type: {subscription_type}")
+            return None
+            
+        # یافتن اطلاعات سرور
+        server = USERS_DB.find_server(id=server_id)
+        if not server:
+            logging.error(f"Server {server_id} not found")
+            return None
+            
+        # بررسی اگر مسیر پروکسی در دیتابیس ذخیره شده است
+        proxy_path = USERS_DB.get_subscription_proxy_path(subscription_type, identifier, uuid)
+        if proxy_path:
+            # تست اعتبار مسیر پروکسی
+            if test_proxy_path(server['url'], proxy_path, server['api_key'], uuid):
+                logging.info(f"Using stored proxy path {proxy_path} for user {telegram_id}")
+                return {
+                    'proxy_path': proxy_path,
+                    'uuid': uuid,
+                    'server_url': server['url'],
+                    'server_api_key': server['api_key']
+                }
+        
+        # اگر مسیر در دیتابیس نباشد یا نامعتبر باشد، از API ادمین استفاده می‌کنیم
+        admin_proxy_path = server.get('proxy_path')
+        if not admin_proxy_path:
+            # اگر مسیر پروکسی ادمین در سرور ذخیره نشده باشد، از URL سرور استخراج می‌کنیم
+            parsed_url = urlparse(server['url'])
+            path_parts = [part for part in parsed_url.path.split("/") if part]
+            if path_parts and len(path_parts) > 0:
+                admin_proxy_path = path_parts[0]
+            else:
+                logging.error(f"Could not extract admin proxy path from server URL: {server['url']}")
+                return None
+        
+        # دریافت اطلاعات کاربر از API ادمین
+        try:
+            user_info = api.get_user(
+                proxy_path=admin_proxy_path,
+                api_key=server['api_key'],
+                uuid=uuid
+            )
+            
+            if user_info and "secret_uuid" in user_info:
+                # یافتن secret_uuid کاربر
+                secret_uuid = user_info["secret_uuid"]
+                if secret_uuid != uuid:
+                    # تست اعتبار secret_uuid به عنوان مسیر پروکسی
+                    if test_proxy_path(server['url'], secret_uuid, server['api_key'], uuid) or test_proxy_path(server['url'], admin_proxy_path, server['api_key'], secret_uuid):
+                        # ذخیره secret_uuid در دیتابیس برای استفاده‌های بعدی
+                        USERS_DB.update_subscription_proxy_path(
+                            subscription_type=subscription_type,
+                            identifier=identifier,
+                            uuid=uuid,
+                            proxy_path=secret_uuid
+                        )
+                        
+                        logging.info(f"Found and saved secret_uuid {secret_uuid} as proxy path for user {telegram_id}")
+                        return {
+                            'proxy_path': secret_uuid,
+                            'uuid': uuid,
+                            'server_url': server['url'],
+                            'server_api_key': server['api_key']
+                        }
+        except Exception as e:
+            logging.error(f"Error getting user info from admin API: {e}")
+            # اگر خطا رخ داد، به روش‌های دیگر ادامه می‌دهیم
+        
+        # استفاده از تابع هوشمند get_user_proxy_path
+        try:
+            user_proxy_path = api.get_user_proxy_path(
+                hiddify_panel_url=server['url'],
+                admin_proxy_path=admin_proxy_path,
+                api_key=server['api_key'],
+                user_uuid=uuid
+            )
+            
+            if user_proxy_path and user_proxy_path != admin_proxy_path:
+                # تست اعتبار مسیر پروکسی
+                if test_proxy_path(server['url'], user_proxy_path, server['api_key'], uuid):
+                    # ذخیره مسیر پروکسی در دیتابیس
+                    USERS_DB.update_subscription_proxy_path(
+                        subscription_type=subscription_type,
+                        identifier=identifier,
+                        uuid=uuid,
+                        proxy_path=user_proxy_path
+                    )
+                    
+                    logging.info(f"Found and saved proxy path {user_proxy_path} for user {telegram_id}")
+                    return {
+                        'proxy_path': user_proxy_path,
+                        'uuid': uuid,
+                        'server_url': server['url'],
+                        'server_api_key': server['api_key']
+                    }
+        except Exception as e:
+            logging.error(f"Error getting user proxy path: {e}")
+        
+        # اگر هیچ روشی موفق نبود، از مسیر پروکسی ادمین استفاده می‌کنیم
+        logging.warning(f"Using admin proxy path {admin_proxy_path} for user {telegram_id} as fallback")
+        return {
+            'proxy_path': admin_proxy_path,
+            'uuid': uuid,
+            'server_url': server['url'],
+            'server_api_key': server['api_key']
+        }
+    except Exception as e:
+        logging.error(f"Error in get_user_subscription_info: {e}")
+        return None
     

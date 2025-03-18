@@ -1470,44 +1470,71 @@ def start():
         logging.error(f"Error in bot polling: {e}")
         exit(1)
 
-def get_user_configs(server_id: int, user_uuid: str) -> dict:
+def get_user_configs(server_id: int, user_uuid: str, telegram_id: int = None, order_id: int = None, subscription_type: str = 'order') -> dict:
     """
-    دریافت کانفیگ‌های کاربر از سرور
+    دریافت کانفیگ‌های کاربر از سرور با استفاده از سیستم هوشمند تشخیص مسیر پروکسی
     
     Args:
         server_id: شناسه سرور
         user_uuid: شناسه یکتای کاربر
+        telegram_id: شناسه تلگرام کاربر (برای non_order subscriptions)
+        order_id: شناسه سفارش (برای order subscriptions)
+        subscription_type: نوع اشتراک ('order' یا 'non_order')
         
     Returns:
         dict: کانفیگ‌های کاربر
     """
     try:
         # دریافت اطلاعات سرور
-        server = USERS_DB.find_server(server_id=server_id)
+        server = USERS_DB.find_server(id=server_id)
         if not server:
-            raise ValueError("سرور یافت نشد")
-            
-        # بررسی وضعیت API گسترش یافته
-        has_expanded_api = api.is_hiddify_api_expanded_installed(
-            proxy_path=server['proxy_path'],
-            api_key=server['api_key']
+            raise ValueError(f"سرور با شناسه {server_id} یافت نشد")
+        
+        # شناسه تشخیص داده نشده است
+        if not telegram_id and not order_id:
+            # تلاش با استفاده از روش قدیمی
+            return api.get_user_configs(
+                hiddify_panel_url=server['url'],
+                admin_proxy_path=server.get('proxy_path', ''),
+                api_key=server.get('api_key', ''),
+                user_uuid=user_uuid
+            )
+        
+        # شناسه برای استفاده در get_user_subscription_info
+        identifier = order_id if subscription_type == 'order' else telegram_id
+        
+        # دریافت اطلاعات اشتراک کاربر با استفاده از سیستم هوشمند
+        subscription_info = utils.get_user_subscription_info(
+            USERS_DB=USERS_DB,
+            telegram_id=telegram_id or order_id,  # استفاده از order_id اگر telegram_id موجود نباشد
+            uuid=user_uuid,
+            subscription_type=subscription_type,
+            identifier=identifier
         )
         
-        if has_expanded_api:
-            print("Using Hiddify-API-Expanded for getting configs")
-        else:
-            print("Using standard API methods for getting configs")
-            
-        # دریافت کانفیگ‌ها
-        # توجه: تابع api.get_user_configs انتظار پارامترهای proxy_path, api_key, uuid را دارد
-        configs = api.get_user_configs(
-            proxy_path=server['proxy_path'], 
-            api_key=server['api_key'], 
-            uuid=user_uuid
+        if not subscription_info:
+            logging.error(f"Could not find subscription info for user {telegram_id or order_id} with UUID {user_uuid}")
+            # استفاده از روش قدیمی به عنوان fallback
+            return api.get_user_configs(
+                hiddify_panel_url=server['url'],
+                admin_proxy_path=server.get('proxy_path', ''),
+                api_key=server.get('api_key', ''),
+                user_uuid=user_uuid
+            )
+        
+        # استفاده از اطلاعات اشتراک برای دریافت کانفیگ‌ها
+        logging.info(f"Getting configs with proxy_path={subscription_info['proxy_path']} for user_uuid={user_uuid}")
+        
+        # استفاده از تابع get_user_configs_enhanced با مسیر پروکسی کاربر
+        configs = api.get_user_configs_enhanced(
+            hiddify_panel_url=subscription_info['server_url'],
+            admin_proxy_path=subscription_info['proxy_path'],
+            api_key=subscription_info['server_api_key'],
+            user_uuid=user_uuid
         )
         
         return configs
         
     except Exception as e:
-        print(f"خطا در دریافت کانفیگ‌های کاربر: {str(e)}")
+        logging.error(f"خطا در دریافت کانفیگ‌های کاربر: {str(e)}")
         raise

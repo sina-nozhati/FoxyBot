@@ -37,126 +37,157 @@ class UserDBManager:
             return None
 
     def create_user_table(self):
-        cur = self.conn.cursor()
+        """Create tables for storing users, plans, and orders"""
         try:
-            cur.execute("CREATE TABLE IF NOT EXISTS users ("
-                        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                        "telegram_id INTEGER NOT NULL UNIQUE,"
-                        "full_name TEXT NULL,"
-                        "username TEXT NULL,"
-                        # "referral_code INTEGER NOT NULL,"
-                        # "referred_by INTEGER NULL,"
-                        # "discount_percent INTEGER NOT NULL DEFAULT 0,"
-                        # "count_warn INTEGER NOT NULL DEFAULT 0,"
-                        "test_subscription BOOLEAN NOT NULL DEFAULT 0,"
-                        "banned BOOLEAN NOT NULL DEFAULT 0,"
-                        "created_at TEXT NOT NULL)")
+            cur = self.conn.cursor()
+
+            # Create users table
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                telegram_id INTEGER PRIMARY KEY,
+                full_name TEXT NOT NULL,
+                username TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                is_admin BOOLEAN DEFAULT FALSE,
+                is_blocked BOOLEAN DEFAULT FALSE
+            )
+            """)
+
+            # Create plans table
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS plans (
+                id INTEGER PRIMARY KEY,
+                size_gb INTEGER NOT NULL,
+                days INTEGER NOT NULL,
+                price INTEGER NOT NULL,
+                server_id INTEGER NOT NULL,
+                description TEXT,
+                status BOOLEAN DEFAULT TRUE
+            )
+            """)
+
+            # Create orders table
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS orders (
+                id INTEGER PRIMARY KEY,
+                telegram_id INTEGER NOT NULL,
+                user_name TEXT NOT NULL,
+                plan_id INTEGER NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                status TEXT DEFAULT 'pending',
+                FOREIGN KEY (telegram_id) REFERENCES users (telegram_id),
+                FOREIGN KEY (plan_id) REFERENCES plans (id)
+            )
+            """)
+            
+            # Create order subscriptions table
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS order_subscriptions (
+                id INTEGER PRIMARY KEY,
+                order_id INTEGER NOT NULL,
+                uuid TEXT NOT NULL,
+                server_id INTEGER NOT NULL,
+                proxy_path TEXT,
+                FOREIGN KEY (order_id) REFERENCES orders (id)
+            )
+            """)
+            
+            # Create non_order subscriptions table for linking user's own configs
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS non_order_subscriptions (
+                id INTEGER PRIMARY KEY,
+                telegram_id INTEGER NOT NULL,
+                uuid TEXT NOT NULL,
+                server_id INTEGER NOT NULL,
+                proxy_path TEXT,
+                FOREIGN KEY (telegram_id) REFERENCES users (telegram_id)
+            )
+            """)
+            
+            # Create str_config table
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS str_config (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )
+            """)
+            
+            # Create int_config table
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS int_config (
+                key TEXT PRIMARY KEY,
+                value INTEGER
+            )
+            """)
+            
+            # Create bool_config table
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS bool_config (
+                key TEXT PRIMARY KEY,
+                value BOOLEAN
+            )
+            """)
+            
+            # Create wallet table
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS wallet (
+                telegram_id INTEGER PRIMARY KEY,
+                balance INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (telegram_id) REFERENCES users (telegram_id)
+            )
+            """)
+            
+            # Create payments table
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS payments (
+                id INTEGER PRIMARY KEY,
+                telegram_id INTEGER NOT NULL,
+                payment_amount INTEGER NOT NULL,
+                payment_method TEXT NOT NULL,
+                payment_image TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                status TEXT DEFAULT 'pending',
+                FOREIGN KEY (telegram_id) REFERENCES users (telegram_id)
+            )
+            """)
+            
+            # Create servers table
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS servers (
+                id INTEGER PRIMARY KEY,
+                url TEXT NOT NULL,
+                proxy_path TEXT,
+                api_key TEXT,
+                user_limit INTEGER NOT NULL,
+                title TEXT,
+                description TEXT,
+                status BOOLEAN DEFAULT TRUE,
+                default_server BOOLEAN DEFAULT FALSE
+            )
+            """)
+
+            # Check if proxy_path column exists in order_subscriptions, add if not exists
+            try:
+                cur.execute("SELECT proxy_path FROM order_subscriptions LIMIT 1")
+            except Error:
+                # Column doesn't exist, add it
+                cur.execute("ALTER TABLE order_subscriptions ADD COLUMN proxy_path TEXT")
+                print("Added proxy_path column to order_subscriptions table")
+                
+            # Check if proxy_path column exists in non_order_subscriptions, add if not exists
+            try:
+                cur.execute("SELECT proxy_path FROM non_order_subscriptions LIMIT 1")
+            except Error:
+                # Column doesn't exist, add it
+                cur.execute("ALTER TABLE non_order_subscriptions ADD COLUMN proxy_path TEXT")
+                print("Added proxy_path column to non_order_subscriptions table")
+            
             self.conn.commit()
+            print("User table created successfully!")
             logging.info("User table created successfully!")
-
-            cur.execute("CREATE TABLE IF NOT EXISTS plans ("
-                        "id INTEGER PRIMARY KEY,"
-                        "size_gb INTEGER NOT NULL,"
-                        "days INTEGER NOT NULL,"
-                        "price INTEGER NOT NULL,"
-                        "server_id INTEGER NOT NULL,"
-                        "description TEXT NULL,"
-                        "status BOOLEAN NOT NULL,"
-                        "FOREIGN KEY (server_id) REFERENCES server (id))")
-            self.conn.commit()
-            logging.info("Plans table created successfully!")
-
-            # cur.execute("CREATE TABLE IF NOT EXISTS user_plans ("
-            #             "id INTEGER PRIMARY KEY,"
-            #             "telegram_id INTEGER NOT NULL UNIQUE,"
-            #             "plan_id INTEGER NOT NULL,"
-            #             "FOREIGN KEY (telegram_id) REFERENCES users (telegram_id),"
-            #             "FOREIGN KEY (plan_id) REFERENCES plans (id))")
-            # self.conn.commit()
-            # logging.info("Plans table created successfully!")
-
-            cur.execute("CREATE TABLE IF NOT EXISTS orders ("
-                        "id INTEGER PRIMARY KEY,"
-                        "telegram_id INTEGER NOT NULL,"
-                        "plan_id INTEGER NOT NULL,"
-                        "user_name TEXT NOT NULL,"
-                        "created_at TEXT NOT NULL,"
-                        "FOREIGN KEY (telegram_id) REFERENCES user (telegram_id),"
-                        "FOREIGN KEY (plan_id) REFERENCES plans (id))")
-            self.conn.commit()
-            logging.info("Orders table created successfully!")
-
-            cur.execute("CREATE TABLE IF NOT EXISTS order_subscriptions ("
-                        "id INTEGER PRIMARY KEY,"
-                        "order_id INTEGER NOT NULL,"
-                        "uuid TEXT NOT NULL,"
-                        "server_id INTEGER NOT NULL,"
-                        "FOREIGN KEY (server_id) REFERENCES server (id),"
-                        "FOREIGN KEY (order_id) REFERENCES orders (id))")
-            self.conn.commit()
-            logging.info("Order subscriptions table created successfully!")
-
-            cur.execute("CREATE TABLE IF NOT EXISTS non_order_subscriptions ("
-                        "id INTEGER PRIMARY KEY,"
-                        "telegram_id INTEGER NOT NULL,"
-                        "uuid TEXT NOT NULL UNIQUE,"
-                        "server_id INTEGER NOT NULL,"
-                        "FOREIGN KEY (server_id) REFERENCES server (id),"
-                        "FOREIGN KEY (telegram_id) REFERENCES users (telegram_id))")
-            self.conn.commit()
-            logging.info("Non order subscriptions table created successfully!")
-
-            cur.execute("CREATE TABLE IF NOT EXISTS str_config ("
-                        "key TEXT NOT NULL UNIQUE,"
-                        "value TEXT NULL)")
-            self.conn.commit()
-            logging.info("str_config table created successfully!")
-
-            cur.execute("CREATE TABLE IF NOT EXISTS int_config ("
-                        "key TEXT NOT NULL UNIQUE,"
-                        "value INTEGER NOT NULL)")
-            self.conn.commit()
-            logging.info("int_config table created successfully!")
-
-            cur.execute("CREATE TABLE IF NOT EXISTS bool_config ("
-                        "key TEXT NOT NULL UNIQUE,"
-                        "value BOOLEAN NOT NULL)")
-            self.conn.commit()
-            logging.info("bool_config table created successfully!")
-
-            cur.execute("CREATE TABLE IF NOT EXISTS wallet ("
-                        "telegram_id INTEGER NOT NULL UNIQUE,"
-                        "balance INTEGER NOT NULL DEFAULT 0,"
-                        "FOREIGN KEY (telegram_id) REFERENCES users (telegram_id))")
-            self.conn.commit()
-            logging.info("wallet table created successfully!")
-
-            cur.execute("CREATE TABLE IF NOT EXISTS payments ("
-                        "id INTEGER PRIMARY KEY,"
-                        "telegram_id INTEGER NOT NULL,"
-                        "payment_amount INTEGER NOT NULL,"
-                        "payment_method TEXT NOT NULL,"
-                        "payment_image TEXT NOT NULL,"
-                        # "user_name TEXT NOT NULL,"
-                        "approved BOOLEAN NULL,"
-                        "created_at TEXT NOT NULL,"
-                        "FOREIGN KEY (telegram_id) REFERENCES users (telegram_id))")
-            self.conn.commit()
-            logging.info("Payments table created successfully!")
-
-            cur.execute("CREATE TABLE IF NOT EXISTS servers ("
-                        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                        "url TEXT NOT NULL,"
-                        "title TEXT, description TEXT,"
-                        "user_limit INTEGER NOT NULL,"
-                        "status BOOLEAN NOT NULL,"
-                        "default_server BOOLEAN NOT NULL DEFAULT 0)")
-            self.conn.commit()
-            logging.info("Servers table created successfully!")
-
-
         except Error as e:
-            logging.error(f"Error while creating user table \n Error:{e}")
+            print(f"Error creating table: {e}")
+            logging.error(f"Error creating table: {e}")
             return False
         return True
 
@@ -487,17 +518,77 @@ class UserDBManager:
 
     def edit_order_subscriptions(self, order_id, **kwargs):
         cur = self.conn.cursor()
-
         for key, value in kwargs.items():
             try:
                 cur.execute(f"UPDATE order_subscriptions SET {key}=? WHERE order_id=?", (value, order_id))
                 self.conn.commit()
-                logging.info(f"Order [{order_id}] successfully update [{key}] to [{value}]")
+                return True
             except Error as e:
-                logging.error(f"Error while updating order [{order_id}] [{key}] to [{value}] \n Error: {e}")
+                logging.error(f"Error while editing order_subscriptions [{order_id}] \n Error:{e}")
                 return False
+        return False
 
-        return True
+    def update_subscription_proxy_path(self, subscription_type, identifier, uuid, proxy_path):
+        """
+        بروزرسانی مسیر پروکسی کاربر در جدول اشتراک‌ها
+        
+        Args:
+            subscription_type: نوع اشتراک ('order' یا 'non_order')
+            identifier: شناسه اشتراک (order_id یا telegram_id)
+            uuid: UUID کاربر
+            proxy_path: مسیر پروکسی کاربر
+            
+        Returns:
+            bool: نتیجه عملیات
+        """
+        cur = self.conn.cursor()
+        try:
+            if subscription_type == 'order':
+                cur.execute("UPDATE order_subscriptions SET proxy_path=? WHERE order_id=? AND uuid=?", 
+                           (proxy_path, identifier, uuid))
+            elif subscription_type == 'non_order':
+                cur.execute("UPDATE non_order_subscriptions SET proxy_path=? WHERE telegram_id=? AND uuid=?",
+                           (proxy_path, identifier, uuid))
+            else:
+                return False
+                
+            self.conn.commit()
+            print(f"Updated proxy_path for {subscription_type} subscription [ID: {identifier}, UUID: {uuid}] to {proxy_path}")
+            return True
+        except Error as e:
+            print(f"Error updating proxy_path for {subscription_type} subscription: {e}")
+            return False
+            
+    def get_subscription_proxy_path(self, subscription_type, identifier, uuid):
+        """
+        دریافت مسیر پروکسی کاربر از جدول اشتراک‌ها
+        
+        Args:
+            subscription_type: نوع اشتراک ('order' یا 'non_order')
+            identifier: شناسه اشتراک (order_id یا telegram_id)
+            uuid: UUID کاربر
+            
+        Returns:
+            str: مسیر پروکسی کاربر یا None در صورت عدم وجود
+        """
+        cur = self.conn.cursor()
+        try:
+            if subscription_type == 'order':
+                cur.execute("SELECT proxy_path FROM order_subscriptions WHERE order_id=? AND uuid=?", 
+                           (identifier, uuid))
+            elif subscription_type == 'non_order':
+                cur.execute("SELECT proxy_path FROM non_order_subscriptions WHERE telegram_id=? AND uuid=?",
+                           (identifier, uuid))
+            else:
+                return None
+                
+            result = cur.fetchone()
+            if result and result[0]:
+                return result[0]
+            return None
+        except Error as e:
+            print(f"Error getting proxy_path for {subscription_type} subscription: {e}")
+            return None
 
     def delete_order_subscription(self, **kwargs):
         cur = self.conn.cursor()
