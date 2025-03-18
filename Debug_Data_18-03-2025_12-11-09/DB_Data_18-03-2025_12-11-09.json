@@ -5,27 +5,17 @@
             "telegram_id": 1439007465,
             "full_name": "Sin \ud83d\udc3e",
             "username": "Thesinpv",
-            "test_subscription": 1,
+            "test_subscription": 0,
             "banned": 0,
-            "created_at": "2025-03-18 10:02:29"
+            "created_at": "2025-03-18 12:09:27"
         }
     ],
-    "plans": [
-        {
-            "id": 10704,
-            "size_gb": 30,
-            "days": 30,
-            "price": 980000,
-            "server_id": 1,
-            "description": null,
-            "status": 1
-        }
-    ],
+    "plans": [],
     "orders": [],
     "order_subscriptions": [],
     "non_order_subscriptions": [
         {
-            "id": 97328868,
+            "id": 75248376,
             "telegram_id": 1439007465,
             "uuid": "e4951b9c-34e4-45a5-bbbf-ccf504101dc6",
             "server_id": 1

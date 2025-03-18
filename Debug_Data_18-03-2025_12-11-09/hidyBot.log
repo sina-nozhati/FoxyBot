@@ -1,0 +1,62 @@
+2025-03-18 12:09:26,402 - root - INFO - User table created successfully!
+2025-03-18 12:09:26,402 - root - INFO - Plans table created successfully!
+2025-03-18 12:09:26,402 - root - INFO - Orders table created successfully!
+2025-03-18 12:09:26,403 - root - INFO - Order subscriptions table created successfully!
+2025-03-18 12:09:26,403 - root - INFO - Non order subscriptions table created successfully!
+2025-03-18 12:09:26,403 - root - INFO - str_config table created successfully!
+2025-03-18 12:09:26,403 - root - INFO - int_config table created successfully!
+2025-03-18 12:09:26,403 - root - INFO - bool_config table created successfully!
+2025-03-18 12:09:26,403 - root - INFO - wallet table created successfully!
+2025-03-18 12:09:26,403 - root - INFO - Payments table created successfully!
+2025-03-18 12:09:26,403 - root - INFO - Servers table created successfully!
+2025-03-18 12:09:26,403 - root - INFO - User table created successfully!
+2025-03-18 12:09:26,404 - root - INFO - Plans table created successfully!
+2025-03-18 12:09:26,404 - root - INFO - Orders table created successfully!
+2025-03-18 12:09:26,404 - root - INFO - Order subscriptions table created successfully!
+2025-03-18 12:09:26,404 - root - INFO - Non order subscriptions table created successfully!
+2025-03-18 12:09:26,404 - root - INFO - str_config table created successfully!
+2025-03-18 12:09:26,404 - root - INFO - int_config table created successfully!
+2025-03-18 12:09:26,404 - root - INFO - bool_config table created successfully!
+2025-03-18 12:09:26,404 - root - INFO - wallet table created successfully!
+2025-03-18 12:09:26,404 - root - INFO - Payments table created successfully!
+2025-03-18 12:09:26,404 - root - INFO - Servers table created successfully!
+2025-03-18 12:09:27,155 - root - INFO - User 1439007465 (Thesinpv) sent /start command
+2025-03-18 12:09:27,155 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 12:09:27,155 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 12:09:27,163 - root - INFO - User [1439007465] added successfully!
+2025-03-18 12:09:27,164 - root - INFO - Balance {'telegram_id': 1439007465} not found!
+2025-03-18 12:09:27,167 - root - INFO - Balance [1439007465] added successfully!
+2025-03-18 12:09:27,569 - root - INFO - Backup panel
+2025-03-18 12:09:27,569 - root - INFO - GET Request to https://panel.private.com/GSaIeUm8V40qw08RRvaiS1VJFBV/ad793ef2-d0ab-4665-a3ed-bae391b90287/admin/backup/backupfile/
+2025-03-18 12:09:27,680 - root - INFO - GET Request to https://panel.private.com/GSaIeUm8V40qw08RRvaiS1VJFBV/ad793ef2-d0ab-4665-a3ed-bae391b90287/admin/backup/backupfile/ - Status Code: 200
+2025-03-18 12:09:36,225 - root - INFO - Order {'telegram_id': 1439007465} not found!
+2025-03-18 12:09:36,225 - root - INFO - Order {'telegram_id': 1439007465} not found!
+2025-03-18 12:09:57,203 - root - INFO - Extract UUID from config
+2025-03-18 12:09:57,204 - root - INFO - Order {'telegram_id': 1439007465} not found!
+2025-03-18 12:09:57,204 - root - INFO - Order {'telegram_id': 1439007465} not found!
+2025-03-18 12:09:57,325 - root - INFO - Order [1439007465] added successfully!
+2025-03-18 12:09:59,484 - root - INFO - Parse users page. Found 1 users.
+2025-03-18 12:09:59,509 - root - INFO - Order {'telegram_id': 1439007465} not found!
+2025-03-18 12:10:02,221 - root - INFO - Order {'uuid': 'e4951b9c-34e4-45a5-bbbf-ccf504101dc6'} not found!
+2025-03-18 12:10:02,221 - root - INFO - Get sub links of user - e4951b9c-34e4-45a5-bbbf-ccf504101dc6
+2025-03-18 12:10:12,932 - root - INFO - Callback Query: users_bot_settings:None
+2025-03-18 12:10:21,920 - root - INFO - Callback Query: users_bot_settings_visible_sub_menu:None
+2025-03-18 12:10:23,097 - root - INFO - Callback Query: users_bot_settings_visible_sub:visible_conf_dir
+2025-03-18 12:10:23,161 - root - INFO - Settings [value] successfully update [value] to [True]
+2025-03-18 12:10:24,869 - root - INFO - Callback Query: users_bot_settings_visible_sub:visible_conf_sub_url
+2025-03-18 12:10:24,924 - root - INFO - Settings [value] successfully update [value] to [True]
+2025-03-18 12:10:28,604 - root - INFO - Extract UUID from config
+2025-03-18 12:10:30,297 - root - INFO - Parse users page. Found 1 users.
+2025-03-18 12:10:30,298 - root - INFO - Order {'telegram_id': 1439007465} not found!
+2025-03-18 12:10:33,162 - root - INFO - Order {'uuid': 'e4951b9c-34e4-45a5-bbbf-ccf504101dc6'} not found!
+2025-03-18 12:10:33,162 - root - INFO - Get sub links of user - e4951b9c-34e4-45a5-bbbf-ccf504101dc6
+2025-03-18 12:10:33,163 - root - INFO - Parse sub links
+2025-03-18 12:10:33,163 - root - INFO - GET Request to https://panel.private.com/GSaIeUm8V40qw08RRvaiS1VJFBV/e4951b9c-34e4-45a5-bbbf-ccf504101dc6/all.txt
+2025-03-18 12:10:33,410 - root - INFO - GET Request to https://panel.private.com/GSaIeUm8V40qw08RRvaiS1VJFBV/e4951b9c-34e4-45a5-bbbf-ccf504101dc6/all.txt - Status Code: 200
+2025-03-18 12:10:58,102 - root - INFO - Order {'uuid': 'e4951b9c-34e4-45a5-bbbf-ccf504101dc6'} not found!
+2025-03-18 12:10:58,102 - root - INFO - Get sub links of user - e4951b9c-34e4-45a5-bbbf-ccf504101dc6
+2025-03-18 12:10:58,102 - root - INFO - Parse sub links
+2025-03-18 12:10:58,102 - root - INFO - GET Request to https://panel.private.com/GSaIeUm8V40qw08RRvaiS1VJFBV/e4951b9c-34e4-45a5-bbbf-ccf504101dc6/all.txt
+2025-03-18 12:10:58,244 - root - INFO - GET Request to https://panel.private.com/GSaIeUm8V40qw08RRvaiS1VJFBV/e4951b9c-34e4-45a5-bbbf-ccf504101dc6/all.txt - Status Code: 200
+2025-03-18 12:11:02,239 - root - INFO - Order {'uuid': 'e4951b9c-34e4-45a5-bbbf-ccf504101dc6'} not found!
+2025-03-18 12:11:02,239 - root - INFO - Get sub links of user - e4951b9c-34e4-45a5-bbbf-ccf504101dc6
