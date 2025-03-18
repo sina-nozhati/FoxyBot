@@ -37,9 +37,9 @@ def server_info_template(server, plans, header=""):
     
     # بهبود در نحوه ساخت URL
     if not server['url'].endswith('/'):
-        full_url = f"{server['url']}/{API_PATH.lstrip('/')}"
+        full_url = f"{server['url']}"
     else:
-        full_url = f"{server['url']}{API_PATH.lstrip('/')}"
+        full_url = f"{server['url'].rstrip('/')}"
     
     # اضافه کردن لاگ
     print(f"Fetching users for server {server['title']} with URL: {full_url}")
@@ -47,7 +47,10 @@ def server_info_template(server, plans, header=""):
     try:
         users_list = api.select(full_url)
         if users_list:
+            print(f"Found {len(users_list)} users for server {server['title']}")
             user_index = len(users_list)
+        else:
+            print(f"No users found for server {server['title']}")
     except Exception as e:
         print(f"Error fetching users: {str(e)}")
         # در صورت خطا، تعداد کاربران را 0 در نظر می‌گیریم

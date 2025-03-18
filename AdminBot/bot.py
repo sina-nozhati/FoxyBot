@@ -1670,14 +1670,39 @@ def callback_query(call: CallbackQuery):
                          reply_markup=plans_markup)
         
     elif key == "server_list_of_users":
-        users_list = api.select(URL)
+        server = USERS_DB.find_server(id=int(value))
+        if not server:
+            bot.send_message(call.message.chat.id, MESSAGES['ERROR_SERVER_NOT_FOUND'])
+            return
+        server = server[0]
+        
+        # لاگ بیشتر برای دیباگ
+        print(f"Getting users list for server: {server['title']} with URL: {server['url']}")
+        
+        # دریافت کاربران از API
+        users_list = api.select(server['url'])
         search_mode = "Single"
+        
         if not users_list:
             bot.send_message(call.message.chat.id, MESSAGES['ERROR_USER_NOT_FOUND'])
             return
-        msg = templates.users_list_template(users_list)
+        
+        # لاگ اطلاعات کاربران
+        print(f"Found {len(users_list)} users. Processing them...")
+        
+        # ساختار داده‌ها را برای استفاده در رابط کاربری پردازش می‌کنیم
+        processed_users = utils.dict_process(server['url'], users_list)
+        
+        if not processed_users:
+            bot.send_message(call.message.chat.id, MESSAGES['ERROR_USER_NOT_FOUND'])
+            return
+            
+        # لاگ نتیجه پردازش
+        print(f"Processed {len(processed_users)} users successfully")
+        
+        msg = templates.users_list_template(processed_users)
         bot.edit_message_text(msg, call.message.chat.id, call.message.message_id,
-                              reply_markup=markups.users_list_markup(value, users_list))
+                              reply_markup=markups.users_list_markup(value, processed_users))
     
     elif key == "server_add_user":
         global add_user_data

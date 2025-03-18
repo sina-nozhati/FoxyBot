@@ -1,6 +1,16 @@
 {
     "users": [],
-    "plans": [],
+    "plans": [
+        {
+            "id": 23146,
+            "size_gb": 50,
+            "days": 30,
+            "price": 980000,
+            "server_id": 1,
+            "description": "\u062a\u0648\u0636\u06cc\u062d\u0627\u062a \u0632\u06cc\u0627\u062f",
+            "status": 1
+        }
+    ],
     "orders": [],
     "order_subscriptions": [],
     "non_order_subscriptions": [],
@@ -15,7 +25,7 @@
         },
         {
             "key": "card_number",
-            "value": "5859831165051649"
+            "value": null
         },
         {
             "key": "card_holder",
@@ -168,20 +178,11 @@
         {
             "id": 1,
             "url": "https://panel.private.com/GSaIeUm8V40qw08RRvaiS1VJFBV/ad793ef2-d0ab-4665-a3ed-bae391b90287",
-            "title": "Main Server",
+            "title": "\u0633\u0631\u0648\u0631 \u062a\u0633\u062a",
             "description": null,
             "user_limit": 2000,
             "status": 1,
             "default_server": 1
-        },
-        {
-            "id": 2,
-            "url": "://panel.private.com1",
-            "title": "asd",
-            "description": null,
-            "user_limit": 200,
-            "status": 1,
-            "default_server": 0
         }
     ],
     "version": "6.1.5"

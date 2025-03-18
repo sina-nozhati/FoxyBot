@@ -154,32 +154,66 @@ def calculate_remaining_last_online(last_online_date_time):
 
 # Process users data - return list of users
 def dict_process(url, users_dict, sub_id=None, server_id=None):
-    BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-    logging.info(f"Parse users page")
+    # استخراج بخش‌های URL
+    parsed_url = urlparse(url)
+    BASE_URL = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    path_parts = [part for part in parsed_url.path.split("/") if part]
+    PROXY_PATH = path_parts[0] if len(path_parts) > 0 else None
+    
+    logging.info(f"Parse users page. Found {len(users_dict)} users.")
+    print(f"Processing users data with BASE_URL={BASE_URL}, PROXY_PATH={PROXY_PATH}")
+    
     if not users_dict:
+        print("No users found to process")
         return False
+        
     users_list = []
     for user in users_dict:
-        users_list.append({
-            "name": user['name'],
+        # لاگ برای دیباگ
+        print(f"Processing user {user.get('name', 'Unknown')} with UUID: {user.get('uuid', 'Unknown')}")
+        
+        # بررسی فیلدهای الزامی
+        if 'uuid' not in user:
+            print(f"User missing UUID. Skipping: {user}")
+            continue
+            
+        # بررسی وجود فیلدهای اصلی و پر کردن مقادیر پیش‌فرض
+        usage_limit = user.get('usage_limit_GB', 0)
+        if usage_limit is None:
+            usage_limit = 0
+            
+        current_usage = user.get('current_usage_GB', 0)
+        if current_usage is None:
+            current_usage = 0
+            
+        package_days = user.get('package_days', 0)
+        if package_days is None:
+            package_days = 0
+            
+        # ساخت داده‌های کاربر با ساختار استاندارد
+        user_data = {
+            "name": user.get('name', 'Unknown'),
             "usage": {
-                'usage_limit_GB': round(user['usage_limit_GB'], 2) if user['usage_limit_GB'] is not None else 0,
-                'current_usage_GB': round(user['current_usage_GB'], 2) if user['current_usage_GB'] is not None else 0,
-                'remaining_usage_GB': calculate_remaining_usage(user['usage_limit_GB'] or 0, user['current_usage_GB'] or 0)
+                'usage_limit_GB': round(usage_limit, 2),
+                'current_usage_GB': round(current_usage, 2),
+                'remaining_usage_GB': calculate_remaining_usage(usage_limit, current_usage)
             },
-            "remaining_day": calculate_remaining_days(user['start_date'], user['package_days'] or 0),
-            "comment": user['comment'] or "",
-            "last_connection": calculate_remaining_last_online(user['last_online']) if user['last_online'] else None,
+            "remaining_day": calculate_remaining_days(user.get('start_date'), package_days),
+            "comment": user.get('comment', "") or "",
+            "last_connection": calculate_remaining_last_online(user.get('last_online')) if user.get('last_online') else None,
             "uuid": user['uuid'],
-            "link": f"{BASE_URL}/{PROXY_PATH}/{user['uuid']}/",
-            "mode": user['mode'],
+            "link": f"{BASE_URL}/{PROXY_PATH}/{user['uuid']}/" if PROXY_PATH else f"{BASE_URL}/{user['uuid']}/",
+            "mode": user.get('mode', 'unknown'),
             "enable": user.get('enable', True),
             "is_active": user.get('is_active', True),
             "lang": user.get('lang', 'fa'),
             "sub_id": sub_id,
             "server_id": server_id
-        })
+        }
+        
+        users_list.append(user_data)
 
+    print(f"Successfully processed {len(users_list)} users")
     return users_list
 
 

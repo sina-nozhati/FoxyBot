@@ -308,39 +308,47 @@ def select(url=None):
         base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
         path_parts = [part for part in parsed_url.path.split("/") if part]
         
-        # قسمت مربوط به API را جدا می‌کنیم
-        api_path = None
-        if '/api/v2' in url:
-            # اگر URL حاوی api/v2 باشد، مسیر API را جدا می‌کنیم
-            api_index = path_parts.index('api')
-            api_path = '/'.join(path_parts[api_index:])
-            proxy_path = path_parts[0] if len(path_parts) > 0 else None
-        else:
-            # در غیر این صورت فرض می‌کنیم اولین بخش مسیر، proxy_path است
-            proxy_path = path_parts[0] if len(path_parts) > 0 else None
-            api_path = 'api/v2/admin/user'
-        
-        # ساختن URL نهایی برای درخواست
-        final_url = f"{base_url}/{proxy_path}/{api_path}"
-        print(f"Final URL for API call: {final_url}")
-        
-        # پیدا کردن api_key برای استفاده در هدر
+        # طبق سند API هیدیفای، مسیر صحیح برای دریافت لیست کاربران
         if len(path_parts) >= 2:
+            proxy_path = path_parts[0]
             api_key = path_parts[1]
+            
+            # ساختن URL نهایی برای درخواست API - مسیر دقیق طبق سند API
+            final_url = f"{base_url}/{proxy_path}/api/v2/admin/user/"
+            print(f"Final URL for API call: {final_url}")
+            
+            # ارسال درخواست با هدر Hiddify-API-Key که در سند API مشخص شده
             headers = {"Hiddify-API-Key": api_key}
+            print(f"Using headers: {headers}")
             
-            # ارسال درخواست با هدر مناسب
             response = requests.get(final_url, headers=headers)
-            response.raise_for_status()
+            print(f"API Response status: {response.status_code}")
             
-            # پردازش پاسخ
-            data = response.json()
-            if 'users' in data:
-                return data['users']
+            # اگر پاسخ موفقیت‌آمیز بود
+            if response.status_code == 200:
+                try:
+                    # سعی می‌کنیم پاسخ JSON را پارس کنیم
+                    data = response.json()
+                    print(f"API Response data structure: {type(data)}")
+                    
+                    # طبق سند API، پاسخ آرایه‌ای از کاربران است
+                    # {'users': [...]} نیست بلکه خود آرایه است
+                    if isinstance(data, list):
+                        print(f"Number of users found: {len(data)}")
+                        return data
+                    else:
+                        print(f"Unexpected response format: {data}")
+                        return []
+                except Exception as e:
+                    print(f"Error parsing JSON response: {str(e)}")
+                    print(f"Response content: {response.text[:200]}...")
+                    return []
             else:
-                return data
+                print(f"API request failed with status code: {response.status_code}")
+                print(f"Response content: {response.text[:200]}...")
+                return []
         else:
-            print("API key not found in URL path")
+            print("Invalid URL path, couldn't extract proxy_path and api_key")
             return []
     except Exception as e:
         print(f"Error in select API call: {str(e)}")

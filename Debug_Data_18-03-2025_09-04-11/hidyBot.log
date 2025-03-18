@@ -1,0 +1,79 @@
+2025-03-18 09:00:25,428 - root - INFO - User table created successfully!
+2025-03-18 09:00:25,428 - root - INFO - Plans table created successfully!
+2025-03-18 09:00:25,428 - root - INFO - Orders table created successfully!
+2025-03-18 09:00:25,428 - root - INFO - Order subscriptions table created successfully!
+2025-03-18 09:00:25,428 - root - INFO - Non order subscriptions table created successfully!
+2025-03-18 09:00:25,428 - root - INFO - str_config table created successfully!
+2025-03-18 09:00:25,429 - root - INFO - int_config table created successfully!
+2025-03-18 09:00:25,429 - root - INFO - bool_config table created successfully!
+2025-03-18 09:00:25,429 - root - INFO - wallet table created successfully!
+2025-03-18 09:00:25,429 - root - INFO - Payments table created successfully!
+2025-03-18 09:00:25,429 - root - INFO - Servers table created successfully!
+2025-03-18 09:00:25,429 - root - INFO - User table created successfully!
+2025-03-18 09:00:25,429 - root - INFO - Plans table created successfully!
+2025-03-18 09:00:25,429 - root - INFO - Orders table created successfully!
+2025-03-18 09:00:25,430 - root - INFO - Order subscriptions table created successfully!
+2025-03-18 09:00:25,430 - root - INFO - Non order subscriptions table created successfully!
+2025-03-18 09:00:25,430 - root - INFO - str_config table created successfully!
+2025-03-18 09:00:25,430 - root - INFO - int_config table created successfully!
+2025-03-18 09:00:25,430 - root - INFO - bool_config table created successfully!
+2025-03-18 09:00:25,430 - root - INFO - wallet table created successfully!
+2025-03-18 09:00:25,430 - root - INFO - Payments table created successfully!
+2025-03-18 09:00:25,430 - root - INFO - Servers table created successfully!
+2025-03-18 09:00:34,558 - root - INFO - Callback Query: server_selected:1
+2025-03-18 09:00:34,698 - root - INFO - Server selected: Main Server with URL: https://testbot.sin1990.ir/GSaIeUm8V40qw08RRvaiS1VJFBV/ad793ef2-d0ab-4665-a3ed-bae391b90287
+2025-03-18 09:00:40,154 - root - INFO - Callback Query: server_list_of_users:1
+2025-03-18 09:00:47,667 - root - INFO - Callback Query: edit_server:1
+2025-03-18 09:00:50,226 - root - INFO - Callback Query: server_edit_title:1
+2025-03-18 09:00:57,128 - root - INFO - Server [1] successfully update [title] to [سرور تست]
+2025-03-18 09:01:01,130 - root - INFO - Callback Query: server_edit_url:1
+2025-03-18 09:01:03,813 - root - INFO - Callback Query: back_to_server_selected:1
+2025-03-18 09:01:10,777 - root - INFO - Callback Query: server_list_of_plans:1
+2025-03-18 09:01:12,248 - root - INFO - Callback Query: users_bot_add_plan:1
+2025-03-18 09:01:15,222 - root - INFO - Callback Query: users_bot_add_plan:1
+2025-03-18 09:01:41,802 - root - INFO - Plan [50GB] added successfully!
+2025-03-18 09:01:50,260 - root - INFO - User 1439007465 (Thesinpv) sent /start command
+2025-03-18 09:01:50,263 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:01:50,264 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:01:50,273 - TeleBot - ERROR - Infinity polling exception: type object 'datetime.datetime' has no attribute 'datetime'
+2025-03-18 09:01:50,284 - TeleBot - ERROR - Exception traceback:
+Traceback (most recent call last):
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 955, in infinity_polling
+    self.polling(non_stop=True, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1043, in polling
+    self.__threaded_polling(non_stop=non_stop, interval=interval, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1118, in __threaded_polling
+    raise e
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1074, in __threaded_polling
+    self.worker_pool.raise_exceptions()
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 147, in raise_exceptions
+    raise self.exception_info
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 90, in run
+    task(*args, **kwargs)
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 6788, in _run_middlewares_and_handler
+    result = handler['function'](message)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/Hiddify-Telegram-Bot/UserBot/bot.py", line 1162, in start_bot
+    created_at = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                 ^^^^^^^^^^^^^^^^^
+AttributeError: type object 'datetime.datetime' has no attribute 'datetime'
+
+2025-03-18 09:01:52,558 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:01:52,558 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:01:54,354 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:01:54,355 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:01:54,993 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:01:54,993 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:01:55,824 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:01:55,824 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:01:56,876 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:01:56,876 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:01:57,617 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:01:57,617 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 09:02:04,115 - root - INFO - Callback Query: server_selected:1
+2025-03-18 09:02:04,169 - root - INFO - Server selected: سرور تست with URL: https://testbot.sin1990.ir/GSaIeUm8V40qw08RRvaiS1VJFBV/ad793ef2-d0ab-4665-a3ed-bae391b90287
+2025-03-18 09:02:06,014 - root - INFO - Callback Query: server_list_of_plans:1
+2025-03-18 09:02:08,990 - root - INFO - Callback Query: back_to_server_selected:1
+2025-03-18 09:02:11,040 - root - INFO - Callback Query: server_list_of_users:1
+2025-03-18 09:03:46,205 - root - INFO - Callback Query: server_status:1
+2025-03-18 09:03:57,441 - root - INFO - Callback Query: search_name:None
