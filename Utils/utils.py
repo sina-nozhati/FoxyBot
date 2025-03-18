@@ -153,12 +153,18 @@ def calculate_remaining_last_online(last_online_date_time):
 
 
 # Process users data - return list of users
-def dict_process(url, users_dict, sub_id=None, server_id=None):
+def dict_process(url, users_dict, sub_id=None, server_id=None, custom_proxy_path=None):
     # استخراج بخش‌های URL
     parsed_url = urlparse(url)
     BASE_URL = f"{parsed_url.scheme}://{parsed_url.netloc}"
-    path_parts = [part for part in parsed_url.path.split("/") if part]
-    PROXY_PATH = path_parts[0] if len(path_parts) > 0 else None
+    
+    # اگر مسیر پروکسی سفارشی ارسال شده باشد از آن استفاده می‌کنیم
+    if custom_proxy_path:
+        PROXY_PATH = custom_proxy_path
+    else:
+        # در غیر این صورت از URL استخراج می‌کنیم
+        path_parts = [part for part in parsed_url.path.split("/") if part]
+        PROXY_PATH = path_parts[0] if len(path_parts) > 0 else None
     
     logging.info(f"Parse users page. Found {len(users_dict)} users.")
     print(f"Processing users data with BASE_URL={BASE_URL}, PROXY_PATH={PROXY_PATH}")
@@ -590,10 +596,17 @@ def non_order_user_info(telegram_id):
                 URL = server['url'] + API_PATH
                 non_order_user = api.find(URL, subscription['uuid'])
                 if non_order_user:
+                    # دریافت مسیر پروکسی ذخیره شده در دیتابیس
+                    proxy_path = subscription.get('proxy_path')
+                    logging.info(f"Using proxy_path from DB: {proxy_path} for UUID: {subscription['uuid']}")
+                    
                     non_order_user = users_to_dict([non_order_user])
-                    non_order_user = dict_process(URL, non_order_user, subscription['id'],server_id)
+                    # ارسال مسیر پروکسی به تابع dict_process
+                    non_order_user = dict_process(URL, non_order_user, subscription['id'], server_id, custom_proxy_path=proxy_path)
                     if non_order_user:
                         non_order_user = non_order_user[0]
+                        # اضافه کردن اطلاعات مسیر پروکسی به اطلاعات کاربر
+                        non_order_user['proxy_path'] = proxy_path
                         users_list.append(non_order_user)
     return users_list
 
@@ -615,10 +628,17 @@ def order_user_info(telegram_id):
                         URL = server['url'] + API_PATH
                         order_user = api.find(URL, subscription['uuid'])
                         if order_user:
+                            # دریافت مسیر پروکسی ذخیره شده در دیتابیس
+                            proxy_path = subscription.get('proxy_path')
+                            logging.info(f"Using proxy_path from DB: {proxy_path} for UUID: {subscription['uuid']}")
+                            
                             order_user = users_to_dict([order_user])
-                            order_user = dict_process(URL, order_user, subscription['id'], server_id)
+                            # ارسال مسیر پروکسی به تابع dict_process
+                            order_user = dict_process(URL, order_user, subscription['id'], server_id, custom_proxy_path=proxy_path)
                             if order_user:
                                 order_user = order_user[0]
+                                # اضافه کردن اطلاعات مسیر پروکسی به اطلاعات کاربر
+                                order_user['proxy_path'] = proxy_path
                                 users_list.append(order_user)
     return users_list
 

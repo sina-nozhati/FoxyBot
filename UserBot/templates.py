@@ -3,13 +3,23 @@ from config import LANG
 from UserBot.content import MESSAGES
 from Utils.utils import rial_to_toman, toman_to_rial,all_configs_settings
 from Database.dbManager import USERS_DB
+import logging
+from urllib.parse import urlparse
 # User Subscription Info Template
 def user_info_template(sub_id, server, usr, header=""):
     settings = USERS_DB.find_bool_config(key='visible_hiddify_hyperlink')
     if settings:
         settings = settings[0]
         if settings['value']:
-            user_name = f"<a href='{usr['link']}'> {usr['name']} </a>"
+            if 'proxy_path' in usr and usr['proxy_path']:
+                parsed_url = urlparse(usr['link'])
+                base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+                uuid = usr['uuid']
+                custom_link = f"{base_url}/{usr['proxy_path']}/{uuid}/"
+                user_name = f"<a href='{custom_link}'> {usr['name']} </a>"
+                logging.info(f"Using custom proxy_path in link: {custom_link}")
+            else:
+                user_name = f"<a href='{usr['link']}'> {usr['name']} </a>"
         else:
             user_name = usr['name']
     else:
