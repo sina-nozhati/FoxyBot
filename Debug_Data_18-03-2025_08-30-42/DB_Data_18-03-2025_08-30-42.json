@@ -1,0 +1,188 @@
+{
+    "users": [],
+    "plans": [],
+    "orders": [],
+    "order_subscriptions": [],
+    "non_order_subscriptions": [],
+    "str_config": [
+        {
+            "key": "bot_admin_id",
+            "value": "[1439007465]"
+        },
+        {
+            "key": "bot_lang",
+            "value": "FA"
+        },
+        {
+            "key": "card_number",
+            "value": "5859831165051649"
+        },
+        {
+            "key": "card_holder",
+            "value": null
+        },
+        {
+            "key": "support_username",
+            "value": null
+        },
+        {
+            "key": "channel_id",
+            "value": null
+        },
+        {
+            "key": "msg_user_start",
+            "value": null
+        },
+        {
+            "key": "msg_manual_android",
+            "value": null
+        },
+        {
+            "key": "msg_manual_ios",
+            "value": null
+        },
+        {
+            "key": "msg_manual_windows",
+            "value": null
+        },
+        {
+            "key": "msg_manual_mac",
+            "value": null
+        },
+        {
+            "key": "msg_manual_linux",
+            "value": null
+        },
+        {
+            "key": "msg_faq",
+            "value": null
+        }
+    ],
+    "int_config": [
+        {
+            "key": "min_deposit_amount",
+            "value": 10000
+        },
+        {
+            "key": "reminder_notification_days",
+            "value": 3
+        },
+        {
+            "key": "reminder_notification_usage",
+            "value": 3
+        },
+        {
+            "key": "test_sub_days",
+            "value": 1
+        },
+        {
+            "key": "test_sub_size_gb",
+            "value": 1
+        },
+        {
+            "key": "advanced_renewal_days",
+            "value": 3
+        },
+        {
+            "key": "advanced_renewal_usage",
+            "value": 3
+        },
+        {
+            "key": "renewal_method",
+            "value": 1
+        }
+    ],
+    "bool_config": [
+        {
+            "key": "visible_hiddify_hyperlink",
+            "value": 1
+        },
+        {
+            "key": "three_random_num_price",
+            "value": 0
+        },
+        {
+            "key": "force_join_channel",
+            "value": 0
+        },
+        {
+            "key": "panel_auto_backup",
+            "value": 1
+        },
+        {
+            "key": "bot_auto_backup",
+            "value": 1
+        },
+        {
+            "key": "test_subscription",
+            "value": 1
+        },
+        {
+            "key": "reminder_notification",
+            "value": 1
+        },
+        {
+            "key": "renewal_subscription_status",
+            "value": 1
+        },
+        {
+            "key": "buy_subscription_status",
+            "value": 1
+        },
+        {
+            "key": "visible_conf_dir",
+            "value": 0
+        },
+        {
+            "key": "visible_conf_sub_auto",
+            "value": 1
+        },
+        {
+            "key": "visible_conf_sub_url",
+            "value": 0
+        },
+        {
+            "key": "visible_conf_sub_url_b64",
+            "value": 0
+        },
+        {
+            "key": "visible_conf_clash",
+            "value": 0
+        },
+        {
+            "key": "visible_conf_hiddify",
+            "value": 0
+        },
+        {
+            "key": "visible_conf_sub_sing_box",
+            "value": 0
+        },
+        {
+            "key": "visible_conf_sub_full_sing_box",
+            "value": 0
+        }
+    ],
+    "wallet": [],
+    "payments": [],
+    "servers": [
+        {
+            "id": 1,
+            "url": "https://panel.private.com/GSaIeUm8V40qw08RRvaiS1VJFBV/ad793ef2-d0ab-4665-a3ed-bae391b90287",
+            "title": "Main Server",
+            "description": null,
+            "user_limit": 2000,
+            "status": 1,
+            "default_server": 1
+        },
+        {
+            "id": 2,
+            "url": "://panel.private.com1",
+            "title": "asd",
+            "description": null,
+            "user_limit": 200,
+            "status": 1,
+            "default_server": 0
+        }
+    ],
+    "version": "6.1.5"
+}

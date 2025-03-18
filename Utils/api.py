@@ -499,40 +499,33 @@ def select(url=None):
         # Remove trailing slash if present
         url = url.rstrip('/')
         
+        # Determine if URL has /api/v2 in it
+        if not url.endswith('/api/v2'):
+            url = url + '/user'
+        else:
+            url = url + '/admin/user'
+            
+        print(f"Final URL for API call: {url}")
+        
         # استخراج proxy_path و api_key از URL پنل
         parsed_url = urlparse(url)
         base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
         path_parts = [part for part in parsed_url.path.split("/") if part]
         
-        # قسمت مربوط به API را جدا می‌کنیم
-        api_path = None
-        if '/api/v2' in url:
-            # اگر URL حاوی api/v2 باشد، مسیر API را جدا می‌کنیم
-            api_index = path_parts.index('api')
-            api_path = '/'.join(path_parts[api_index:])
-            proxy_path = path_parts[0] if len(path_parts) > 0 else None
-        else:
-            # در غیر این صورت فرض می‌کنیم اولین بخش مسیر، proxy_path است
-            proxy_path = path_parts[0] if len(path_parts) > 0 else None
-            api_path = 'api/v2/admin/user'
-        
-        # ساختن URL نهایی برای درخواست
-        final_url = f"{base_url}/{proxy_path}/{api_path}"
-        print(f"Final URL for API call: {final_url}")
-        
         # پیدا کردن api_key برای استفاده در هدر
+        api_key = None
         if len(path_parts) >= 2:
             api_key = path_parts[1]
             headers = {"Hiddify-API-Key": api_key}
             
             # ارسال درخواست با هدر مناسب
-            response = requests.get(final_url, headers=headers)
+            response = requests.get(url, headers=headers)
             response.raise_for_status()
             
             # پردازش پاسخ
             data = response.json()
-            if 'users' in data:
-                return data['users']
+            if "users" in data:
+                return data["users"]
             else:
                 return data
         else:
