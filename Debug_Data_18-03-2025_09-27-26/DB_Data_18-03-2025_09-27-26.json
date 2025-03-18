@@ -1,16 +1,6 @@
 {
     "users": [],
-    "plans": [
-        {
-            "id": 23146,
-            "size_gb": 50,
-            "days": 30,
-            "price": 980000,
-            "server_id": 1,
-            "description": "\u062a\u0648\u0636\u06cc\u062d\u0627\u062a \u0632\u06cc\u0627\u062f",
-            "status": 1
-        }
-    ],
+    "plans": [],
     "orders": [],
     "order_subscriptions": [],
     "non_order_subscriptions": [],
@@ -178,7 +168,7 @@
         {
             "id": 1,
             "url": "https://panel.private.com/GSaIeUm8V40qw08RRvaiS1VJFBV/ad793ef2-d0ab-4665-a3ed-bae391b90287",
-            "title": "\u0633\u0631\u0648\u0631 \u062a\u0633\u062a",
+            "title": "Main Server",
             "description": null,
             "user_limit": 2000,
             "status": 1,

@@ -549,3 +549,126 @@ def get_all_configs(proxy_path, api_key):
         return {"error": str(e)}
     except Exception as e:
         return {"error": str(e)}
+
+# Add legacy alias functions for backward compatibility
+# معادل‌سازی توابع قدیمی با توابع جدید برای حفظ سازگاری با کد قبلی
+def insert(url, name, package_days, usage_limit_GB, comment=None, enable=True, is_active=True, mode="monthly"):
+    """
+    Legacy wrapper for add_user function used in bot.py
+    """
+    print(f"Legacy insert called: {name}, {package_days} days, {usage_limit_GB} GB")
+    
+    # استخراج proxy_path و api_key از URL پنل
+    parsed_url = urlparse(url)
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    path_parts = [part for part in parsed_url.path.split("/") if part]
+    
+    if len(path_parts) < 2:
+        print(f"Invalid URL format: {url}")
+        return False
+        
+    proxy_path = path_parts[0]
+    api_key = path_parts[1]
+    
+    # تنظیم URL پایه
+    global HIDDIFY_PANEL_URL
+    old_url = HIDDIFY_PANEL_URL
+    HIDDIFY_PANEL_URL = base_url
+    
+    try:
+        user_data = {
+            "name": name,
+            "package_days": package_days,
+            "usage_limit_GB": usage_limit_GB,
+            "comment": comment or "",
+            "enable": enable,
+            "is_active": is_active,
+            "mode": mode
+        }
+        
+        # فراخوانی تابع اصلی
+        result = add_user(proxy_path, api_key, user_data)
+        
+        # بازگرداندن UUID کاربر ایجاد شده
+        if result and "uuid" in result:
+            print(f"User created successfully with UUID: {result['uuid']}")
+            return result["uuid"]
+        else:
+            print("Failed to create user: No UUID in response")
+            return False
+    except Exception as e:
+        print(f"Error inserting user: {str(e)}")
+        return False
+    finally:
+        # بازگرداندن URL قبلی
+        HIDDIFY_PANEL_URL = old_url
+
+
+def update(url, uuid, **kwargs):
+    """
+    Legacy wrapper for update_user function used in bot.py
+    """
+    print(f"Legacy update called for UUID {uuid}, params: {kwargs}")
+    
+    # استخراج proxy_path و api_key از URL پنل
+    parsed_url = urlparse(url)
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    path_parts = [part for part in parsed_url.path.split("/") if part]
+    
+    if len(path_parts) < 2:
+        print(f"Invalid URL format: {url}")
+        return False
+        
+    proxy_path = path_parts[0]
+    api_key = path_parts[1]
+    
+    # تنظیم URL پایه
+    global HIDDIFY_PANEL_URL
+    old_url = HIDDIFY_PANEL_URL
+    HIDDIFY_PANEL_URL = base_url
+    
+    try:
+        # فراخوانی تابع اصلی
+        result = update_user(proxy_path, api_key, uuid, kwargs)
+        return result
+    except Exception as e:
+        print(f"Error updating user: {str(e)}")
+        return False
+    finally:
+        # بازگرداندن URL قبلی
+        HIDDIFY_PANEL_URL = old_url
+
+
+def find(url, uuid):
+    """
+    Legacy wrapper for get_user function used in bot.py
+    """
+    print(f"Legacy find called for UUID {uuid}")
+    
+    # استخراج proxy_path و api_key از URL پنل
+    parsed_url = urlparse(url)
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    path_parts = [part for part in parsed_url.path.split("/") if part]
+    
+    if len(path_parts) < 2:
+        print(f"Invalid URL format: {url}")
+        return False
+        
+    proxy_path = path_parts[0]
+    api_key = path_parts[1]
+    
+    # تنظیم URL پایه
+    global HIDDIFY_PANEL_URL
+    old_url = HIDDIFY_PANEL_URL
+    HIDDIFY_PANEL_URL = base_url
+    
+    try:
+        # فراخوانی تابع اصلی
+        result = get_user(proxy_path, api_key, uuid)
+        return result
+    except Exception as e:
+        print(f"Error finding user: {str(e)}")
+        return False
+    finally:
+        # بازگرداندن URL قبلی
+        HIDDIFY_PANEL_URL = old_url
