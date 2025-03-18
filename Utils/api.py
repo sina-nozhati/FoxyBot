@@ -193,40 +193,50 @@ def get_server_status(proxy_path, api_key):
         raise e
 
 def get_user_configs(proxy_path, api_key, uuid):
-    """Get user configs by UUID (compatibility wrapper)"""
+    """Get user configs by UUID (compatibility wrapper for Hiddify-API-Expanded)"""
     headers = {"Hiddify-API-Key": api_key}
     
     try:
-        # ابتدا مسیر پروکسی کاربر را دریافت می‌کنیم
-        base_url = HIDDIFY_PANEL_URL  # استفاده از URL تنظیم شده در متغیر سراسری
-        print(f"Using base URL: {base_url}")
-        
-        # استفاده از تابع جدید با همان پارامترها
-        return get_user_configs_enhanced(
-            hiddify_panel_url=base_url,
-            admin_proxy_path=proxy_path,
-            api_key=api_key,
-            user_uuid=uuid
+        # ابتدا از مسیر ادمین با UUID استفاده می‌کنیم (Hiddify-API-Expanded این را پشتیبانی می‌کند)
+        print(f"Using Hiddify-API-Expanded compatible method")
+        response = requests.get(
+            f"{HIDDIFY_PANEL_URL}/{proxy_path}/{uuid}/api/v2/user/all-configs/",
+            headers=headers
         )
+        response.raise_for_status()
+        print("Success using admin path with UUID")
+        return response.json()
     except Exception as e:
-        print(f"Error in get_user_configs (compatibility wrapper): {str(e)}")
-        # سعی می‌کنیم به روش قدیمی انجام دهیم
+        print(f"Error with primary method: {str(e)}")
+        
         try:
-            response = requests.get(
-                f"{HIDDIFY_PANEL_URL}/{proxy_path}/{uuid}/api/v2/user/all-configs/",
-                headers=headers
-            )
-            response.raise_for_status()
-            return response.json()
-        except Exception as inner_e:
-            print(f"Error in get_user_configs fallback: {str(inner_e)}")
-            # آخرین تلاش
+            # روش دوم: فقط با مسیر ادمین
+            print("Trying alternative method with admin path only")
             response = requests.get(
                 f"{HIDDIFY_PANEL_URL}/{proxy_path}/api/v2/user/all-configs/",
                 headers=headers
             )
             response.raise_for_status()
+            print("Success using admin path only")
             return response.json()
+        except Exception as inner_e:
+            print(f"Error with secondary method: {str(inner_e)}")
+            
+            # اگر API گسترش یافته کار نکرد، به روش قبلی برمی‌گردیم
+            base_url = HIDDIFY_PANEL_URL  # استفاده از URL تنظیم شده در متغیر سراسری
+            print(f"Falling back to enhanced method with: {base_url}")
+            
+            try:
+                # استفاده از تابع بهبود یافته
+                return get_user_configs_enhanced(
+                    hiddify_panel_url=base_url,
+                    admin_proxy_path=proxy_path,
+                    api_key=api_key,
+                    user_uuid=uuid
+                )
+            except Exception as final_error:
+                print(f"All methods failed. Final error: {str(final_error)}")
+                raise Exception(f"خطا در دریافت کانفیگ‌های کاربر: {str(final_error)}")
 
 def update_user_usage(proxy_path, api_key):
     """Update user usage statistics"""
@@ -270,7 +280,7 @@ def get_user_profile(proxy_path, api_key, uuid=None):
 
 def get_user_configs_enhanced(hiddify_panel_url: str, admin_proxy_path: str, api_key: str, user_uuid: str) -> dict:
     """
-    نسخه بهبود یافته دریافت کانفیگ‌های کاربر با استفاده از UUID
+    نسخه بهبود یافته دریافت کانفیگ‌های کاربر با استفاده از UUID - سازگار با Hiddify-API-Expanded
     
     Args:
         hiddify_panel_url: آدرس پنل هیدیفای
@@ -282,76 +292,48 @@ def get_user_configs_enhanced(hiddify_panel_url: str, admin_proxy_path: str, api
         dict: کانفیگ‌های کاربر
     """
     try:
-        # ابتدا مسیر پروکسی کاربر را از تابع بهبود یافته دریافت می‌کنیم
-        print(f"Getting proxy path for user UUID: {user_uuid}")
+        # با Hiddify-API-Expanded، هر دو روش زیر باید کار کنند
+        methods = [
+            # روش 1: استفاده از مسیر ادمین و UUID کاربر
+            lambda: requests.get(
+                f"{hiddify_panel_url}/{admin_proxy_path}/{user_uuid}/api/v2/user/all-configs/",
+                headers={"Hiddify-API-Key": api_key}
+            ),
+            # روش 2: فقط با مسیر ادمین و API کاربر
+            lambda: requests.get(
+                f"{hiddify_panel_url}/{admin_proxy_path}/api/v2/user/all-configs/",
+                headers={"Hiddify-API-Key": api_key}
+            )
+        ]
+        
+        # هر روش را امتحان می‌کنیم تا یکی موفق شود
+        for method in methods:
+            try:
+                response = method()
+                response.raise_for_status()
+                print(f"Successfully retrieved configs with status code: {response.status_code}")
+                return response.json()
+            except requests.exceptions.RequestException as e:
+                print(f"Method failed: {str(e)}")
+                continue
+                
+        # اگر هیچ روشی موفق نبود، به روش‌های قبلی برمی‌گردیم
+        print("Falling back to previous methods...")
+        # اول سعی می‌کنیم مسیر پروکسی کاربر را پیدا کنیم
         user_proxy_path = get_user_proxy_path(hiddify_panel_url, admin_proxy_path, api_key, user_uuid)
         print(f"Found user proxy path: {user_proxy_path}")
         
-        # تلاش برای دریافت کانفیگ‌ها با مسیر پروکسی کاربر
-        try:
-            print(f"Requesting configs with user proxy path: {user_proxy_path}")
-            response = requests.get(
-                f"{hiddify_panel_url}/{user_proxy_path}/{user_uuid}/api/v2/user/all-configs/",
-                headers={"Hiddify-API-Key": api_key}
-            )
-            response.raise_for_status()
-            print(f"Successfully got configs with status code: {response.status_code}")
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            print(f"Failed to get configs with user proxy path: {str(e)}")
-            
-            # اگر روش اول ناموفق بود، سعی می‌کنیم با روشی دیگر
-            try:
-                print(f"Trying alternative method: user proxy path + all-configs")
-                response = requests.get(
-                    f"{hiddify_panel_url}/{user_proxy_path}/api/v2/user/all-configs/",
-                    headers={"Hiddify-API-Key": api_key}
-                )
-                response.raise_for_status()
-                return response.json()
-            except requests.exceptions.RequestException as e2:
-                print(f"Alternative method failed: {str(e2)}")
-                
-                # یک روش دیگر امتحان می‌کنیم
-                try:
-                    print(f"Trying with admin proxy path + secret UUID")
-                    # دریافت اطلاعات کاربر
-                    user_response = requests.get(
-                        f"{hiddify_panel_url}/{admin_proxy_path}/api/v2/admin/user/{user_uuid}/",
-                        headers={"Hiddify-API-Key": api_key}
-                    )
-                    user_response.raise_for_status()
-                    user_data = user_response.json()
-                    secret_uuid = user_data.get("secret_uuid", user_uuid)
-                    
-                    if secret_uuid != user_uuid:
-                        response = requests.get(
-                            f"{hiddify_panel_url}/{admin_proxy_path}/{secret_uuid}/api/v2/user/all-configs/",
-                            headers={"Hiddify-API-Key": api_key}
-                        )
-                        response.raise_for_status()
-                        return response.json()
-                    else:
-                        raise Exception("Secret UUID is the same as UUID, can't use this method")
-                except Exception as e3:
-                    print(f"Admin path + secret UUID method failed: {str(e3)}")
-                    
-                    # آخرین تلاش - استفاده از UUID کاربر به عنوان مسیر پروکسی
-                    try:
-                        print(f"Last attempt: Using UUID as proxy path")
-                        response = requests.get(
-                            f"{hiddify_panel_url}/{user_uuid}/api/v2/user/all-configs/",
-                            headers={"Hiddify-API-Key": api_key}
-                        )
-                        response.raise_for_status()
-                        return response.json()
-                    except requests.exceptions.RequestException as e4:
-                        print(f"All attempts failed. Last error: {str(e4)}")
-                        raise
+        # با مسیر پروکسی کاربر امتحان می‌کنیم
+        response = requests.get(
+            f"{hiddify_panel_url}/{user_proxy_path}/{user_uuid}/api/v2/user/all-configs/",
+            headers={"Hiddify-API-Key": api_key}
+        )
+        response.raise_for_status()
+        return response.json()
             
     except requests.exceptions.RequestException as e:
-        print(f"خطا در دریافت کانفیگ‌های کاربر: {str(e)}")
-        raise
+        print(f"Error getting user configs: {str(e)}")
+        raise Exception(f"خطا در دریافت کانفیگ‌های کاربر: {str(e)}")
 
 def get_panel_info(proxy_path, api_key):
     """Get panel information"""
@@ -781,7 +763,8 @@ def get_user_proxy_path(hiddify_panel_url: str, admin_proxy_path: str, api_key: 
         str: مسیر پروکسی کاربر
     """
     try:
-        # دریافت اطلاعات کاربر از طریق API ادمین
+        # با Hiddify-API-Expanded، می‌توانیم مستقیماً از UUID کاربر استفاده کنیم
+        # اما برای اطمینان، هنوز اطلاعات کاربر را دریافت می‌کنیم
         response = requests.get(
             f"{hiddify_panel_url}/{admin_proxy_path}/api/v2/admin/user/{user_uuid}/",
             headers={"Hiddify-API-Key": api_key}
@@ -789,86 +772,69 @@ def get_user_proxy_path(hiddify_panel_url: str, admin_proxy_path: str, api_key: 
         response.raise_for_status()
         user_data = response.json()
         
-        # سعی می‌کنیم بررسی کنیم آیا در پاسخ API فیلدهای دیگری برای مسیر پروکسی وجود دارد
-        print(f"User data keys: {list(user_data.keys())}")
-        
-        # بررسی فیلدهای احتمالی که ممکن است حاوی مسیر پروکسی باشند
+        # ابتدا proxy_path را بررسی می‌کنیم (بیشترین اولویت)
         if "proxy_path" in user_data and user_data["proxy_path"]:
-            print(f"Found proxy_path: {user_data['proxy_path']}")
+            print(f"Found proxy_path in user data: {user_data['proxy_path']}")
             return user_data["proxy_path"]
-        elif "sub_link" in user_data and user_data["sub_link"]:
-            # ممکن است لینک اشتراک شامل مسیر پروکسی باشد
-            try:
-                sub_link = user_data["sub_link"]
-                print(f"Found sub_link: {sub_link}")
-                # استخراج مسیر پروکسی از لینک اشتراک
-                from urllib.parse import urlparse
-                parsed = urlparse(sub_link)
-                path_parts = parsed.path.strip('/').split('/')
-                if len(path_parts) > 0:
-                    return path_parts[0]
-            except Exception as e:
-                print(f"Error extracting from sub_link: {e}")
-        elif "subscription_url" in user_data and user_data["subscription_url"]:
-            # ممکن است در فیلد subscription_url وجود داشته باشد
-            try:
-                sub_url = user_data["subscription_url"]
-                print(f"Found subscription_url: {sub_url}")
-                # استخراج مسیر پروکسی از لینک اشتراک
-                from urllib.parse import urlparse
-                parsed = urlparse(sub_url)
-                path_parts = parsed.path.strip('/').split('/')
-                if len(path_parts) > 0:
-                    return path_parts[0]
-            except Exception as e:
-                print(f"Error extracting from subscription_url: {e}")
-        elif "uuid" in user_data and user_data["uuid"] != user_uuid:
-            # ممکن است uuid متفاوت با ورودی همان مسیر پروکسی باشد
-            print(f"Found different uuid: {user_data['uuid']}")
-            return user_data["uuid"]
-        elif "secret_uuid" in user_data and user_data["secret_uuid"] != user_uuid:
-            # ممکن است secret_uuid همان مسیر پروکسی باشد
-            print(f"Found secret_uuid: {user_data['secret_uuid']}")
+            
+        # بررسی اطلاعات بیشتر برای یافتن مسیر پروکسی
+        for field in ["sub_link", "subscription_url"]:
+            if field in user_data and user_data[field]:
+                try:
+                    link = user_data[field]
+                    from urllib.parse import urlparse
+                    parsed = urlparse(link)
+                    path_parts = parsed.path.strip('/').split('/')
+                    if len(path_parts) > 0 and path_parts[0] != admin_proxy_path:
+                        print(f"Found proxy_path in {field}: {path_parts[0]}")
+                        return path_parts[0]
+                except Exception as e:
+                    print(f"Error extracting from {field}: {e}")
+        
+        # بررسی secret_uuid
+        if "secret_uuid" in user_data and user_data["secret_uuid"] != user_uuid:
+            print(f"Using secret_uuid as proxy_path: {user_data['secret_uuid']}")
             return user_data["secret_uuid"]
-        
-        # اگر هیچ یک از موارد بالا یافت نشد، از تابع دیگری برای یافتن مسیر پروکسی استفاده می‌کنیم
-        # دریافت لیست همه کاربران
-        users_response = requests.get(
-            f"{hiddify_panel_url}/{admin_proxy_path}/api/v2/admin/user/",
-            headers={"Hiddify-API-Key": api_key}
-        )
-        users_response.raise_for_status()
-        users = users_response.json()
-        
-        # بررسی همه کاربران برای یافتن کاربر با UUID مشابه
-        for user in users:
-            if user.get("uuid") == user_uuid:
-                # اگر کاربر یافت شد و دارای proxy_path است
-                if "proxy_path" in user and user["proxy_path"]:
-                    print(f"Found proxy_path in users list: {user['proxy_path']}")
-                    return user["proxy_path"]
-        
-        # به عنوان آخرین راه‌حل، سعی می‌کنیم با استفاده از API دیگری مسیر پروکسی را پیدا کنیم
-        configs_response = requests.get(
-            f"{hiddify_panel_url}/{admin_proxy_path}/api/v2/admin/configs/",
-            headers={"Hiddify-API-Key": api_key}
-        )
-        configs_response.raise_for_status()
-        configs = configs_response.json()
-        
-        # بررسی تنظیمات برای یافتن مسیر پروکسی کاربر
-        if "users" in configs:
-            for config_user in configs["users"]:
-                if config_user.get("uuid") == user_uuid and "proxy_path" in config_user:
-                    print(f"Found proxy_path in configs: {config_user['proxy_path']}")
-                    return config_user["proxy_path"]
-                    
-        # اگر همه تلاش‌ها ناموفق بود، مسیر پروکسی ادمین را برگردانید
-        # با یک پیام هشدار
-        print(f"WARNING: Could not find user proxy path for UUID {user_uuid}, using admin proxy path")
+            
+        # با Hiddify-API-Expanded، می‌توانیم از مسیر ادمین استفاده کنیم
+        # API به طور خودکار مسیر درست را پیدا می‌کند
+        print(f"Using admin proxy path with Hiddify-API-Expanded: {admin_proxy_path}")
         return admin_proxy_path
             
     except requests.exceptions.RequestException as e:
-        print(f"خطا در دریافت مسیر پروکسی کاربر: {str(e)}")
-        # در صورت خطا هم از مسیر پروکسی ادمین استفاده می‌کنیم
+        print(f"Error getting user proxy path: {str(e)}")
+        # با API گسترش یافته، می‌توانیم از مسیر ادمین استفاده کنیم
         return admin_proxy_path
+
+def is_hiddify_api_expanded_installed(proxy_path, api_key):
+    """
+    بررسی می‌کند که آیا Hiddify-API-Expanded نصب شده است یا خیر
+    
+    Args:
+        proxy_path: مسیر پروکسی ادمین
+        api_key: کلید API
+        
+    Returns:
+        bool: True اگر نصب شده باشد، False در غیر این صورت
+    """
+    headers = {"Hiddify-API-Key": api_key}
+    try:
+        # یک درخواست به API پنل برای دریافت اطلاعات پنل می‌فرستیم
+        response = requests.get(
+            f"{HIDDIFY_PANEL_URL}/{proxy_path}/api/v2/panel/info/",
+            headers=headers
+        )
+        response.raise_for_status()
+        panel_info = response.json()
+        
+        # بررسی می‌کنیم که آیا در اطلاعات پنل، نشانی از API گسترش یافته وجود دارد
+        if "api_expanded" in panel_info and panel_info["api_expanded"]:
+            print("Hiddify-API-Expanded is installed!")
+            return True
+            
+        # نشانی از نصب نیست، اما درخواست موفق بوده است
+        print("Hiddify panel is working, but API-Expanded not detected")
+        return False
+    except Exception as e:
+        print(f"Error checking Hiddify-API-Expanded: {str(e)}")
+        return False

@@ -1487,12 +1487,23 @@ def get_user_configs(server_id: int, user_uuid: str) -> dict:
         if not server:
             raise ValueError("سرور یافت نشد")
             
-        # دریافت کانفیگ‌ها با استفاده از مسیر پروکسی کاربر
+        # بررسی وضعیت API گسترش یافته
+        has_expanded_api = api.is_hiddify_api_expanded_installed(
+            proxy_path=server['proxy_path'],
+            api_key=server['api_key']
+        )
+        
+        if has_expanded_api:
+            print("Using Hiddify-API-Expanded for getting configs")
+        else:
+            print("Using standard API methods for getting configs")
+            
+        # دریافت کانفیگ‌ها
+        # توجه: تابع api.get_user_configs انتظار پارامترهای proxy_path, api_key, uuid را دارد
         configs = api.get_user_configs(
-            hiddify_panel_url=server['url'],
-            admin_proxy_path=server['proxy_path'],
-            api_key=server['api_key'],
-            user_uuid=user_uuid
+            proxy_path=server['proxy_path'], 
+            api_key=server['api_key'], 
+            uuid=user_uuid
         )
         
         return configs
