@@ -686,6 +686,32 @@ def update_info_subscription(message: Message, uuid,markup=None):
 
 
 # *********************************** Callback Query Area ***********************************
+def get_user_subscription_configs(uuid):
+    """
+    بازیابی اطلاعات اشتراک کاربر با استفاده از مسیر پروکسی ذخیره شده
+    
+    Args:
+        uuid (str): شناسه منحصر به فرد کاربر
+        
+    Returns:
+        dict: دیکشنری حاوی لینک‌های اشتراک کاربر یا None در صورت خطا
+    """
+    try:
+        # بازیابی اطلاعات اشتراک
+        subscription = utils.find_order_subscription_by_uuid(uuid)
+        if subscription:
+            # از مسیر پروکسی ذخیره شده برای ساخت لینک‌های اشتراک استفاده می‌کنیم
+            proxy_path = subscription.get('proxy_path')
+            if proxy_path:
+                logging.info(f"Using stored proxy path for {uuid}: {proxy_path}")
+                return utils.sub_links(uuid, proxy_path)
+            
+        # اگر اشتراکی پیدا نشد یا proxy_path موجود نبود، از روش معمولی استفاده می‌کنیم
+        return utils.sub_links(uuid)
+    except Exception as e:
+        logging.error(f"Error getting subscription configs for {uuid}: {e}")
+        return None
+
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call: CallbackQuery):
     bot.answer_callback_query(call.id, MESSAGES['WAIT'])
@@ -893,7 +919,7 @@ def callback_query(call: CallbackQuery):
                                       reply_markup=sub_url_user_list_markup(value))
     # User Configs - Direct Link
     elif key == 'conf_dir':
-        sub = utils.sub_links(value)
+        sub = get_user_subscription_configs(value)
         if not sub:
             bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
             return
@@ -906,7 +932,7 @@ def callback_query(call: CallbackQuery):
         
     # User Configs - Vless Configs Callback
     elif key == "conf_dir_vless":
-        sub = utils.sub_links(value)
+        sub = get_user_subscription_configs(value)
         if not sub:
             bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
             return
@@ -924,7 +950,7 @@ def callback_query(call: CallbackQuery):
                                  reply_markup=main_menu_keyboard_markup())
     # User Configs - VMess Configs Callback
     elif key == "conf_dir_vmess":
-        sub = utils.sub_links(value)
+        sub = get_user_subscription_configs(value)
         if not sub:
             bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
             return
@@ -942,7 +968,7 @@ def callback_query(call: CallbackQuery):
                                  reply_markup=main_menu_keyboard_markup())
     # User Configs - Trojan Configs Callback
     elif key == "conf_dir_trojan":
-        sub = utils.sub_links(value)
+        sub = get_user_subscription_configs(value)
         if not sub:
             bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
             return
@@ -959,41 +985,9 @@ def callback_query(call: CallbackQuery):
                 bot.send_message(call.message.chat.id, f"{message}",
                                  reply_markup=main_menu_keyboard_markup())
 
-    # User Configs - Subscription Configs Callback
-    elif key == "conf_sub_url":
-        sub = utils.sub_links(value)
-        if not sub:
-            bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
-            return
-        qr_code = utils.txt_to_qr(sub['sub_link'])
-        if not qr_code:
-            bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
-            return
-        bot.send_photo(
-            call.message.chat.id,
-            photo=qr_code,
-            caption=f"{KEY_MARKUP['CONFIGS_SUB']}\n<code>{sub['sub_link']}</code>",
-            reply_markup=main_menu_keyboard_markup()
-        )
-    # User Configs - Base64 Subscription Configs Callback
-    elif key == "conf_sub_url_b64":
-        sub = utils.sub_links(value)
-        if not sub:
-            bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
-            return
-        qr_code = utils.txt_to_qr(sub['sub_link_b64'])
-        if not qr_code:
-            bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
-            return
-        bot.send_photo(
-            call.message.chat.id,
-            photo=qr_code,
-            caption=f"{KEY_MARKUP['CONFIGS_SUB_B64']}\n<code>{sub['sub_link_b64']}</code>",
-            reply_markup=main_menu_keyboard_markup()
-        )
     # User Configs - Subscription Configs For Clash Callback
     elif key == "conf_clash":
-        sub = utils.sub_links(value)
+        sub = get_user_subscription_configs(value)
         if not sub:
             bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
             return
@@ -1009,7 +1003,7 @@ def callback_query(call: CallbackQuery):
         )
     # User Configs - Subscription Configs For Hiddify Callback
     elif key == "conf_hiddify":
-        sub = utils.sub_links(value)
+        sub = get_user_subscription_configs(value)
         if not sub:
             bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
             return
@@ -1025,7 +1019,7 @@ def callback_query(call: CallbackQuery):
         )
 
     elif key == "conf_sub_auto":
-        sub = utils.sub_links(value)
+        sub = get_user_subscription_configs(value)
         if not sub:
             bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
             return
@@ -1041,7 +1035,7 @@ def callback_query(call: CallbackQuery):
         )
 
     elif key == "conf_sub_sing_box":
-        sub = utils.sub_links(value)
+        sub = get_user_subscription_configs(value)
         if not sub:
             bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
             return
@@ -1057,7 +1051,7 @@ def callback_query(call: CallbackQuery):
         )
 
     elif key == "conf_sub_full_sing_box":
-        sub = utils.sub_links(value)
+        sub = get_user_subscription_configs(value)
         if not sub:
             bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
             return
@@ -1071,29 +1065,39 @@ def callback_query(call: CallbackQuery):
             caption=f"{KEY_MARKUP['CONFIGS_FULL_SING_BOX']}\n<code>{sub['sing_box_full']}</code>",
             reply_markup=main_menu_keyboard_markup()
         )
-
-    # manual
-    elif key == "msg_manual":
-        settings = utils.all_configs_settings()
-        android_msg = settings['msg_manual_android'] if settings['msg_manual_android'] else MESSAGES['MANUAL_ANDROID']
-        ios_msg = settings['msg_manual_ios'] if settings['msg_manual_ios'] else MESSAGES['MANUAL_IOS']
-        win_msg = settings['msg_manual_windows'] if settings['msg_manual_windows'] else MESSAGES['MANUAL_WIN']
-        mac_msg = settings['msg_manual_mac'] if settings['msg_manual_mac'] else MESSAGES['MANUAL_MAC']
-        linux_msg = settings['msg_manual_linux'] if settings['msg_manual_linux'] else MESSAGES['MANUAL_LIN']
-        if value == 'android':
-            bot.send_message(call.message.chat.id, android_msg, reply_markup=main_menu_keyboard_markup())
-        elif value == 'ios':
-            bot.send_message(call.message.chat.id, ios_msg, reply_markup=main_menu_keyboard_markup())
-        elif value == 'win':
-            bot.send_message(call.message.chat.id, win_msg, reply_markup=main_menu_keyboard_markup())
-        elif value == 'mac':
-            bot.send_message(call.message.chat.id, mac_msg, reply_markup=main_menu_keyboard_markup())
-        elif value == 'lin':
-            bot.send_message(call.message.chat.id, linux_msg, reply_markup=main_menu_keyboard_markup())
-
-
-
-
+        
+    # User Configs - Subscription Configs Callback
+    elif key == "conf_sub_url":
+        sub = get_user_subscription_configs(value)
+        if not sub:
+            bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
+            return
+        qr_code = utils.txt_to_qr(sub['sub_link'])
+        if not qr_code:
+            bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
+            return
+        bot.send_photo(
+            call.message.chat.id,
+            photo=qr_code,
+            caption=f"{KEY_MARKUP['CONFIGS_SUB']}\n<code>{sub['sub_link']}</code>",
+            reply_markup=main_menu_keyboard_markup()
+        )
+    # User Configs - Base64 Subscription Configs Callback
+    elif key == "conf_sub_url_b64":
+        sub = get_user_subscription_configs(value)
+        if not sub:
+            bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
+            return
+        qr_code = utils.txt_to_qr(sub['sub_link_b64'])
+        if not qr_code:
+            bot.send_message(call.message.chat.id, MESSAGES['UNKNOWN_ERROR'])
+            return
+        bot.send_photo(
+            call.message.chat.id,
+            photo=qr_code,
+            caption=f"{KEY_MARKUP['CONFIGS_SUB_B64']}\n<code>{sub['sub_link_b64']}</code>",
+            reply_markup=main_menu_keyboard_markup()
+        )
 
     # ----------------------------------- Back Area -----------------------------------
     # Back To User Menu
