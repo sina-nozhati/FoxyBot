@@ -540,23 +540,31 @@ def add_server_url(message: Message):
     if is_it_cancel(message):
         return
     msg_wait = bot.send_message(message.chat.id, MESSAGES['WAIT'], reply_markup=markups.while_edit_user_markup())
-    url = panel_url_validator(message.text)
+    
+    # ذخیره URL اصلی
+    original_url = message.text.strip()
+    
+    # اعتبارسنجی URL
+    is_valid = panel_url_validator(original_url)
     bot.delete_message(message.chat.id, msg_wait.message_id)
-    if not url:
+    
+    if not is_valid:
         bot.reply_to(message, MESSAGES['ERROR_ADD_SERVER_URL'],
                      reply_markup=markups.while_edit_user_markup())
         bot.register_next_step_handler(message, add_server_url)
         return
+    
+    # بررسی تکراری بودن URL
     servers = USERS_DB.select_servers()
     if servers:
         for server in servers:
-            if server['url'] == url:
+            if server['url'] == original_url:
                 bot.reply_to(message, MESSAGES['ERROR_SAME_SERVER_URL'],
                             reply_markup=markups.while_edit_user_markup())
                 bot.register_next_step_handler(message, add_server_url)
                 return
                 
-    add_server_data['url'] = url
+    add_server_data['url'] = original_url
     bot.send_message(message.chat.id, MESSAGES['ADD_SERVER_USER_LIMIT'],
                      reply_markup=markups.while_edit_user_markup())
     bot.register_next_step_handler(message, add_server_user_limit)
@@ -628,22 +636,31 @@ def edit_server_url(message: Message, server_id):
     if is_it_cancel(message):
         return
     msg_wait = bot.send_message(message.chat.id, MESSAGES['WAIT'], reply_markup=markups.while_edit_user_markup())
-    url = panel_url_validator(message.text)
+    
+    # ذخیره URL اصلی
+    original_url = message.text.strip()
+    
+    # اعتبارسنجی URL
+    is_valid = panel_url_validator(original_url)
     bot.delete_message(message.chat.id, msg_wait.message_id)
-    if not url:
+    
+    if not is_valid:
         bot.send_message(message.chat.id, MESSAGES['ERROR_ADD_SERVER_URL'],
                      reply_markup=markups.while_edit_user_markup())
         bot.register_next_step_handler(message, edit_server_url, server_id)
         return
+    
+    # بررسی تکراری بودن URL
     servers = USERS_DB.select_servers()
     if servers:
         for server in servers:
-            if server['url'] == url:
+            if server['url'] == original_url:
                 bot.reply_to(message, MESSAGES['ERROR_SAME_SERVER_URL'],
                             reply_markup=markups.while_edit_user_markup())
                 bot.register_next_step_handler(message, edit_server_url, server_id)
                 return
-    status = USERS_DB.edit_server(int(server_id), url=url)
+                
+    status = USERS_DB.edit_server(int(server_id), url=original_url)
     if not status:
         bot.send_message(message.chat.id, MESSAGES['ERROR_UNKNOWN'])
         return

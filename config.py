@@ -157,8 +157,8 @@ def panel_url_validator(url):
         
         # Test connection to panel
         print(colored("Testing connection to panel...", "cyan"))
-            result = ping_panel(proxy_path, api_key)
-            if "error" in result:
+        result = ping_panel(proxy_path, api_key)
+        if "error" in result:
             print(colored(f"Error connecting to panel: {result['error']}", "red"))
             print(colored(f"Please check if the URL is correct: {base_url}/{proxy_path}/api/v2/panel/ping/", "yellow"))
             return False
@@ -198,7 +198,7 @@ def set_by_user():
             print(colored("Admin IDs must be numbers separated by commas!", "red"))
             continue
         admin_ids = [int(admin_id) for admin_id in admin_ids]
-            break
+        break
             
     print()
     print(colored("Example: 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ\n[get it from @BotFather]", "yellow"))
@@ -209,7 +209,7 @@ def set_by_user():
             continue
         if not bot_token_validator(token):
             continue
-                break
+        break
     
     print()
     print(colored("You can use the bot as a userbot for your clients!", "yellow"))
@@ -218,7 +218,7 @@ def set_by_user():
         if userbot not in ["y", "n"]:
             print(colored("Please enter y or n!", "red"))
             continue
-            break
+        break
             
     if userbot == "y":
         print()
