@@ -672,3 +672,64 @@ def find(url, uuid):
     finally:
         # بازگرداندن URL قبلی
         HIDDIFY_PANEL_URL = old_url
+
+def get_user_proxy_path(hiddify_panel_url: str, admin_proxy_path: str, api_key: str, user_uuid: str) -> str:
+    """
+    دریافت مسیر پروکسی کاربر از طریق API
+    
+    Args:
+        hiddify_panel_url: آدرس پنل هیدیفای
+        admin_proxy_path: مسیر پروکسی ادمین
+        api_key: کلید API
+        user_uuid: شناسه یکتای کاربر
+        
+    Returns:
+        str: مسیر پروکسی کاربر
+    """
+    try:
+        # دریافت اطلاعات کاربر از طریق API ادمین
+        response = requests.get(
+            f"{hiddify_panel_url}/{admin_proxy_path}/api/v2/admin/user/{user_uuid}/",
+            headers={"Hiddify-API-Key": api_key}
+        )
+        response.raise_for_status()
+        user_data = response.json()
+        
+        # استخراج مسیر پروکسی از پاسخ API
+        if "proxy_path" in user_data:
+            return user_data["proxy_path"]
+        else:
+            raise ValueError("مسیر پروکسی در پاسخ API یافت نشد")
+            
+    except requests.exceptions.RequestException as e:
+        print(f"خطا در دریافت مسیر پروکسی کاربر: {str(e)}")
+        raise
+
+def get_user_configs(hiddify_panel_url: str, admin_proxy_path: str, api_key: str, user_uuid: str) -> dict:
+    """
+    دریافت کانفیگ‌های کاربر با استفاده از UUID
+    
+    Args:
+        hiddify_panel_url: آدرس پنل هیدیفای
+        admin_proxy_path: مسیر پروکسی ادمین
+        api_key: کلید API
+        user_uuid: شناسه یکتای کاربر
+        
+    Returns:
+        dict: کانفیگ‌های کاربر
+    """
+    try:
+        # دریافت مسیر پروکسی کاربر
+        user_proxy_path = get_user_proxy_path(hiddify_panel_url, admin_proxy_path, api_key, user_uuid)
+        
+        # دریافت کانفیگ‌ها با استفاده از مسیر پروکسی کاربر
+        response = requests.get(
+            f"{hiddify_panel_url}/{user_proxy_path}/api/v2/user/all-configs/",
+            headers={"Hiddify-API-Key": api_key}
+        )
+        response.raise_for_status()
+        return response.json()
+        
+    except requests.exceptions.RequestException as e:
+        print(f"خطا در دریافت کانفیگ‌های کاربر: {str(e)}")
+        raise

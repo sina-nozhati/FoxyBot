@@ -1469,3 +1469,34 @@ def start():
         print(colored(f"Error in bot polling: {e}", "red"))
         logging.error(f"Error in bot polling: {e}")
         exit(1)
+
+def get_user_configs(server_id: int, user_uuid: str) -> dict:
+    """
+    دریافت کانفیگ‌های کاربر از سرور
+    
+    Args:
+        server_id: شناسه سرور
+        user_uuid: شناسه یکتای کاربر
+        
+    Returns:
+        dict: کانفیگ‌های کاربر
+    """
+    try:
+        # دریافت اطلاعات سرور
+        server = USERS_DB.find_server(server_id=server_id)
+        if not server:
+            raise ValueError("سرور یافت نشد")
+            
+        # دریافت کانفیگ‌ها با استفاده از مسیر پروکسی کاربر
+        configs = api.get_user_configs(
+            hiddify_panel_url=server['url'],
+            admin_proxy_path=server['proxy_path'],
+            api_key=server['api_key'],
+            user_uuid=user_uuid
+        )
+        
+        return configs
+        
+    except Exception as e:
+        print(f"خطا در دریافت کانفیگ‌های کاربر: {str(e)}")
+        raise
