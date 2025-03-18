@@ -604,12 +604,17 @@ class UserDBManager:
             logging.error(f"Error while deleting order [{kwargs}] \n Error: {e}")
             return False
 
-    def add_non_order_subscription(self, non_sub_id, telegram_id, uuid, server_id):
+    def add_non_order_subscription(self, non_sub_id, telegram_id, uuid, server_id, proxy_path=None):
         cur = self.conn.cursor()
         try:
-            cur.execute(
-                "INSERT INTO non_order_subscriptions(id,telegram_id,uuid,server_id) VALUES(?,?,?,?)",
-                (non_sub_id, telegram_id, uuid, server_id))
+            if proxy_path:
+                cur.execute(
+                    "INSERT INTO non_order_subscriptions(id,telegram_id,uuid,server_id,proxy_path) VALUES(?,?,?,?,?)",
+                    (non_sub_id, telegram_id, uuid, server_id, proxy_path))
+            else:
+                cur.execute(
+                    "INSERT INTO non_order_subscriptions(id,telegram_id,uuid,server_id) VALUES(?,?,?,?)",
+                    (non_sub_id, telegram_id, uuid, server_id))
             self.conn.commit()
             logging.info(f"Order [{telegram_id}] added successfully!")
             return True

@@ -537,6 +537,21 @@ def next_step_link_subscription(message: Message):
         return
     if is_it_cancel(message):
         return
+    
+    # استخراج مسیر پروکسی از لینک اشتراک
+    proxy_path = None
+    if message.text.startswith('http'):
+        try:
+            from urllib.parse import urlparse
+            parsed_url = urlparse(message.text)
+            path_parts = parsed_url.path.strip('/').split('/')
+            if len(path_parts) >= 2:
+                # مسیر پروکسی معمولاً اولین بخش URL بعد از دامنه است
+                proxy_path = path_parts[0]
+                logging.info(f"Extracted proxy_path: {proxy_path} from subscription link")
+        except Exception as e:
+            logging.error(f"Error extracting proxy_path from URL: {str(e)}")
+    
     uuid = utils.is_it_config_or_sub(message.text)
     if uuid:
         # check is it already subscribed
@@ -550,12 +565,21 @@ def next_step_link_subscription(message: Message):
         if not servers:
             bot.send_message(message.chat.id, MESSAGES['UNKNOWN_ERROR'], reply_markup=main_menu_keyboard_markup())
             return
+        server_id = None
         for server in servers:
             users_list = api.find(server['url'] + API_PATH, uuid)
             if users_list:
                 server_id = server['id']
                 break
-        status = USERS_DB.add_non_order_subscription(non_sub_id, message.chat.id, uuid, server_id)
+        
+        if not server_id:
+            bot.send_message(message.chat.id, MESSAGES['SUBSCRIPTION_INFO_NOT_FOUND'], 
+                             reply_markup=main_menu_keyboard_markup())
+            return
+        
+        # استفاده از مسیر پروکسی در زمان اضافه کردن اشتراک
+        status = USERS_DB.add_non_order_subscription(non_sub_id, message.chat.id, uuid, server_id, proxy_path)
+        
         if status:
             bot.send_message(message.chat.id, MESSAGES['SUBSCRIPTION_CONFIRMED'],
                              reply_markup=main_menu_keyboard_markup())
