@@ -153,68 +153,73 @@ def calculate_remaining_last_online(last_online_date_time):
 
 
 # Process users data - return list of users
-def dict_process(url, users_dict, sub_id=None, server_id=None):
-    # استخراج بخش‌های URL
-    parsed_url = urlparse(url)
-    BASE_URL = f"{parsed_url.scheme}://{parsed_url.netloc}"
-    path_parts = [part for part in parsed_url.path.split("/") if part]
-    PROXY_PATH = path_parts[0] if len(path_parts) > 0 else None
+def dict_process(data: list, url: str) -> list:
+    """
+    پردازش داده‌های دریافتی از API و تبدیل به فرمت مورد نیاز
+    """
+    processed_data = []
     
-    logging.info(f"Parse users page. Found {len(users_dict)} users.")
-    print(f"Processing users data with BASE_URL={BASE_URL}, PROXY_PATH={PROXY_PATH}")
-    
-    if not users_dict:
-        print("No users found to process")
-        return False
+    try:
+        # استخراج proxy_path از URL
+        parsed_url = urlparse(url)
+        path_parts = [part for part in parsed_url.path.split("/") if part]
+        proxy_path = path_parts[0] if path_parts else None
         
-    users_list = []
-    for user in users_dict:
-        # لاگ برای دیباگ
-        print(f"Processing user {user.get('name', 'Unknown')} with UUID: {user.get('uuid', 'Unknown')}")
+        if not proxy_path:
+            print("خطا: نتوانستیم proxy_path را از URL استخراج کنیم")
+            return processed_data
+            
+        print(f"پردازش {len(data)} کاربر با proxy_path: {proxy_path}")
         
-        # بررسی فیلدهای الزامی
-        if 'uuid' not in user:
-            print(f"User missing UUID. Skipping: {user}")
-            continue
-            
-        # بررسی وجود فیلدهای اصلی و پر کردن مقادیر پیش‌فرض
-        usage_limit = user.get('usage_limit_GB', 0)
-        if usage_limit is None:
-            usage_limit = 0
-            
-        current_usage = user.get('current_usage_GB', 0)
-        if current_usage is None:
-            current_usage = 0
-            
-        package_days = user.get('package_days', 0)
-        if package_days is None:
-            package_days = 0
-            
-        # ساخت داده‌های کاربر با ساختار استاندارد
-        user_data = {
-            "name": user.get('name', 'Unknown'),
-            "usage": {
-                'usage_limit_GB': round(usage_limit, 2),
-                'current_usage_GB': round(current_usage, 2),
-                'remaining_usage_GB': calculate_remaining_usage(usage_limit, current_usage)
-            },
-            "remaining_day": calculate_remaining_days(user.get('start_date'), package_days),
-            "comment": user.get('comment', "") or "",
-            "last_connection": calculate_remaining_last_online(user.get('last_online')) if user.get('last_online') else None,
-            "uuid": user['uuid'],
-            "link": f"{BASE_URL}/{PROXY_PATH}/{user['uuid']}/" if PROXY_PATH else f"{BASE_URL}/{user['uuid']}/",
-            "mode": user.get('mode', 'unknown'),
-            "enable": user.get('enable', True),
-            "is_active": user.get('is_active', True),
-            "lang": user.get('lang', 'fa'),
-            "sub_id": sub_id,
-            "server_id": server_id
-        }
+        for user in data:
+            try:
+                # بررسی فیلدهای اجباری
+                if not user.get("uuid"):
+                    print(f"خطا: کاربر بدون UUID یافت شد: {user}")
+                    continue
+                    
+                # تنظیم مقادیر پیش‌فرض برای فیلدهای اختیاری
+                usage_limit = user.get("usage_limit_GB", 0)
+                current_usage = user.get("current_usage_GB", 0)
+                package_days = user.get("package_days", 0)
+                
+                # محاسبه روزهای باقی‌مانده
+                if user.get("start_date"):
+                    start_date = datetime.strptime(user["start_date"], "%Y-%m-%d")
+                    remaining_days = max(0, package_days - (datetime.now() - start_date).days)
+                else:
+                    remaining_days = package_days
+                
+                # ساخت دیکشنری پردازش شده
+                processed_user = {
+                    "name": user.get("name", "Unknown"),
+                    "usage": f"{current_usage:.2f}/{usage_limit:.2f} GB",
+                    "remaining_day": remaining_days,
+                    "comment": user.get("comment", ""),
+                    "last_connection": user.get("last_online", "Never"),
+                    "uuid": user["uuid"],
+                    "link": f"{url}/{proxy_path}/{user['uuid']}/#user",
+                    "mode": user.get("mode", "no_reset"),
+                    "enable": user.get("enable", True),
+                    "is_active": user.get("is_active", True),
+                    "lang": user.get("lang", "en"),
+                    "sub_id": user.get("id", 0),
+                    "server_id": proxy_path
+                }
+                
+                processed_data.append(processed_user)
+                print(f"کاربر پردازش شد: {processed_user['name']}")
+                
+            except Exception as e:
+                print(f"خطا در پردازش کاربر: {str(e)}")
+                continue
+                
+        print(f"تعداد {len(processed_data)} کاربر با موفقیت پردازش شدند")
+        return processed_data
         
-        users_list.append(user_data)
-
-    print(f"Successfully processed {len(users_list)} users")
-    return users_list
+    except Exception as e:
+        print(f"خطا در پردازش داده‌ها: {str(e)}")
+        return processed_data
 
 
 # Get single user info - return dict of user info

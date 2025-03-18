@@ -1,0 +1,84 @@
+2025-03-18 10:02:21,658 - root - INFO - User table created successfully!
+2025-03-18 10:02:21,658 - root - INFO - Plans table created successfully!
+2025-03-18 10:02:21,658 - root - INFO - Orders table created successfully!
+2025-03-18 10:02:21,658 - root - INFO - Order subscriptions table created successfully!
+2025-03-18 10:02:21,658 - root - INFO - Non order subscriptions table created successfully!
+2025-03-18 10:02:21,659 - root - INFO - str_config table created successfully!
+2025-03-18 10:02:21,659 - root - INFO - int_config table created successfully!
+2025-03-18 10:02:21,659 - root - INFO - bool_config table created successfully!
+2025-03-18 10:02:21,659 - root - INFO - wallet table created successfully!
+2025-03-18 10:02:21,659 - root - INFO - Payments table created successfully!
+2025-03-18 10:02:21,659 - root - INFO - Servers table created successfully!
+2025-03-18 10:02:21,659 - root - INFO - User table created successfully!
+2025-03-18 10:02:21,659 - root - INFO - Plans table created successfully!
+2025-03-18 10:02:21,659 - root - INFO - Orders table created successfully!
+2025-03-18 10:02:21,659 - root - INFO - Order subscriptions table created successfully!
+2025-03-18 10:02:21,659 - root - INFO - Non order subscriptions table created successfully!
+2025-03-18 10:02:21,659 - root - INFO - str_config table created successfully!
+2025-03-18 10:02:21,659 - root - INFO - int_config table created successfully!
+2025-03-18 10:02:21,659 - root - INFO - bool_config table created successfully!
+2025-03-18 10:02:21,660 - root - INFO - wallet table created successfully!
+2025-03-18 10:02:21,660 - root - INFO - Payments table created successfully!
+2025-03-18 10:02:21,660 - root - INFO - Servers table created successfully!
+2025-03-18 10:02:29,352 - root - INFO - User 1439007465 (Thesinpv) sent /start command
+2025-03-18 10:02:29,354 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 10:02:29,355 - root - INFO - User {'telegram_id': 1439007465} not found!
+2025-03-18 10:02:29,358 - root - INFO - User [1439007465] added successfully!
+2025-03-18 10:02:29,359 - root - INFO - Balance {'telegram_id': 1439007465} not found!
+2025-03-18 10:02:29,362 - root - INFO - Balance [1439007465] added successfully!
+2025-03-18 10:02:34,214 - root - INFO - Plan {'server_id': 1} not found!
+2025-03-18 10:02:38,417 - root - INFO - Callback Query: server_selected:1
+2025-03-18 10:02:38,472 - root - INFO - Server selected: Main Server with URL: https://testbot.sin1990.ir/GSaIeUm8V40qw08RRvaiS1VJFBV/ad793ef2-d0ab-4665-a3ed-bae391b90287
+2025-03-18 10:02:41,042 - root - INFO - Callback Query: server_list_of_plans:1
+2025-03-18 10:02:42,662 - root - INFO - Callback Query: users_bot_add_plan:1
+2025-03-18 10:03:08,425 - root - INFO - Plan [30GB] added successfully!
+2025-03-18 10:03:20,506 - root - INFO - Order [1439007465] added successfully!
+2025-03-18 10:03:20,510 - root - INFO - User [1439007465] successfully update [test_subscription] to [True]
+2025-03-18 10:03:20,699 - root - INFO - Parse users page. Found 1 users.
+2025-03-18 10:03:50,172 - TeleBot - ERROR - Infinity polling exception: type object 'datetime.datetime' has no attribute 'datetime'
+2025-03-18 10:03:50,180 - TeleBot - ERROR - Exception traceback:
+Traceback (most recent call last):
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 955, in infinity_polling
+    self.polling(non_stop=True, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1043, in polling
+    self.__threaded_polling(non_stop=non_stop, interval=interval, timeout=timeout, long_polling_timeout=long_polling_timeout,
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1118, in __threaded_polling
+    raise e
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/__init__.py", line 1074, in __threaded_polling
+    self.worker_pool.raise_exceptions()
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 147, in raise_exceptions
+    raise self.exception_info
+  File "/opt/Hiddify-Telegram-Bot/venv/lib/python3.12/site-packages/telebot/util.py", line 90, in run
+    task(*args, **kwargs)
+  File "/opt/Hiddify-Telegram-Bot/UserBot/bot.py", line 312, in next_step_send_screenshot
+    created_at = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                 ^^^^^^^^^^^^^^^^^
+AttributeError: type object 'datetime.datetime' has no attribute 'datetime'
+
+2025-03-18 10:04:18,414 - root - INFO - User 1439007465 (Thesinpv) sent /start command
+2025-03-18 10:04:18,420 - root - INFO - User [1439007465] successfully update [full_name] to [Sin 🐾]
+2025-03-18 10:04:18,421 - root - INFO - User [1439007465] successfully update [username] to [Thesinpv]
+2025-03-18 10:04:31,814 - root - INFO - Callback Query: bot_user_info:1439007465
+2025-03-18 10:04:31,921 - root - INFO - Order {'telegram_id': 1439007465} not found!
+2025-03-18 10:04:31,921 - root - INFO - Payment {'telegram_id': 1439007465} not found!
+2025-03-18 10:04:32,025 - root - INFO - Parse users page. Found 1 users.
+2025-03-18 10:04:32,026 - root - INFO - Order {'telegram_id': 1439007465} not found!
+2025-03-18 10:04:39,299 - root - INFO - Callback Query: users_bot_send_message_by_admin:1439007465
+2025-03-18 10:04:48,121 - root - INFO - Parse users page. Found 1 users.
+2025-03-18 10:04:48,123 - root - INFO - Order {'telegram_id': 1439007465} not found!
+2025-03-18 10:04:50,645 - root - INFO - Order {'uuid': 'e4951b9c-34e4-45a5-bbbf-ccf504101dc6'} not found!
+2025-03-18 10:04:50,646 - root - INFO - Get sub links of user - e4951b9c-34e4-45a5-bbbf-ccf504101dc6
+2025-03-18 10:07:22,965 - root - INFO - Callback Query: users_bot_settings:None
+2025-03-18 10:07:27,528 - root - INFO - Callback Query: users_bot_settings_visible_sub_menu:None
+2025-03-18 10:07:29,277 - root - INFO - Callback Query: users_bot_settings_visible_sub:visible_conf_dir
+2025-03-18 10:07:29,362 - root - INFO - Settings [value] successfully update [value] to [True]
+2025-03-18 10:07:32,233 - root - INFO - Callback Query: users_bot_settings_visible_sub:visible_conf_sub_url
+2025-03-18 10:07:32,337 - root - INFO - Settings [value] successfully update [value] to [True]
+2025-03-18 10:07:34,521 - root - INFO - Callback Query: users_bot_settings:None
+2025-03-18 10:07:37,403 - root - INFO - Parse users page. Found 1 users.
+2025-03-18 10:07:37,407 - root - INFO - Order {'telegram_id': 1439007465} not found!
+2025-03-18 10:07:41,621 - root - INFO - Order {'uuid': 'e4951b9c-34e4-45a5-bbbf-ccf504101dc6'} not found!
+2025-03-18 10:07:41,622 - root - INFO - Get sub links of user - e4951b9c-34e4-45a5-bbbf-ccf504101dc6
+2025-03-18 10:07:41,622 - root - INFO - Parse sub links
+2025-03-18 10:07:41,622 - root - INFO - GET Request to https://panel.private.com/GSaIeUm8V40qw08RRvaiS1VJFBV/e4951b9c-34e4-45a5-bbbf-ccf504101dc6/all.txt
+2025-03-18 10:07:41,842 - root - INFO - GET Request to https://panel.private.com/GSaIeUm8V40qw08RRvaiS1VJFBV/e4951b9c-34e4-45a5-bbbf-ccf504101dc6/all.txt - Status Code: 200

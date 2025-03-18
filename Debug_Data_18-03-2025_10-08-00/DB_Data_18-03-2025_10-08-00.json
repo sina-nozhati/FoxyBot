@@ -1,9 +1,36 @@
 {
-    "users": [],
-    "plans": [],
+    "users": [
+        {
+            "id": 1,
+            "telegram_id": 1439007465,
+            "full_name": "Sin \ud83d\udc3e",
+            "username": "Thesinpv",
+            "test_subscription": 1,
+            "banned": 0,
+            "created_at": "2025-03-18 10:02:29"
+        }
+    ],
+    "plans": [
+        {
+            "id": 10704,
+            "size_gb": 30,
+            "days": 30,
+            "price": 980000,
+            "server_id": 1,
+            "description": null,
+            "status": 1
+        }
+    ],
     "orders": [],
     "order_subscriptions": [],
-    "non_order_subscriptions": [],
+    "non_order_subscriptions": [
+        {
+            "id": 97328868,
+            "telegram_id": 1439007465,
+            "uuid": "e4951b9c-34e4-45a5-bbbf-ccf504101dc6",
+            "server_id": 1
+        }
+    ],
     "str_config": [
         {
             "key": "bot_admin_id",
@@ -131,7 +158,7 @@
         },
         {
             "key": "visible_conf_dir",
-            "value": 0
+            "value": 1
         },
         {
             "key": "visible_conf_sub_auto",
@@ -139,7 +166,7 @@
         },
         {
             "key": "visible_conf_sub_url",
-            "value": 0
+            "value": 1
         },
         {
             "key": "visible_conf_sub_url_b64",
@@ -162,7 +189,12 @@
             "value": 0
         }
     ],
-    "wallet": [],
+    "wallet": [
+        {
+            "telegram_id": 1439007465,
+            "balance": 0
+        }
+    ],
     "payments": [],
     "servers": [
         {

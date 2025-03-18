@@ -289,70 +289,20 @@ def ping_panel(proxy_path, api_key):
     except Exception as e:
         return {"error": str(e)}
 
-def select(url=None):
+def select(url: str, proxy_path: str, api_key: str, uuid: str = None) -> dict:
     """
-    Get list of users from panel API, using full URL
-    This is a wrapper function for get_users that accepts a full URL
+    دریافت کانفیگ‌های کاربر با استفاده از UUID یا نام کاربری
     """
-    print(f"Making API call to get users with URL: {url}")
-    
     try:
-        if not url:
-            return []
-            
-        # Remove trailing slash if present
-        url = url.rstrip('/')
-        
-        # استخراج proxy_path و api_key از URL پنل
-        parsed_url = urlparse(url)
-        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
-        path_parts = [part for part in parsed_url.path.split("/") if part]
-        
-        # طبق سند API هیدیفای، مسیر صحیح برای دریافت لیست کاربران
-        if len(path_parts) >= 2:
-            proxy_path = path_parts[0]
-            api_key = path_parts[1]
-            
-            # ساختن URL نهایی برای درخواست API - مسیر دقیق طبق سند API
-            final_url = f"{base_url}/{proxy_path}/api/v2/admin/user/"
-            print(f"Final URL for API call: {final_url}")
-            
-            # ارسال درخواست با هدر Hiddify-API-Key که در سند API مشخص شده
-            headers = {"Hiddify-API-Key": api_key}
-            print(f"Using headers: {headers}")
-            
-            response = requests.get(final_url, headers=headers)
-            print(f"API Response status: {response.status_code}")
-            
-            # اگر پاسخ موفقیت‌آمیز بود
-            if response.status_code == 200:
-                try:
-                    # سعی می‌کنیم پاسخ JSON را پارس کنیم
-                    data = response.json()
-                    print(f"API Response data structure: {type(data)}")
-                    
-                    # طبق سند API، پاسخ آرایه‌ای از کاربران است
-                    # {'users': [...]} نیست بلکه خود آرایه است
-                    if isinstance(data, list):
-                        print(f"Number of users found: {len(data)}")
-                        return data
-                    else:
-                        print(f"Unexpected response format: {data}")
-                        return []
-                except Exception as e:
-                    print(f"Error parsing JSON response: {str(e)}")
-                    print(f"Response content: {response.text[:200]}...")
-                    return []
-            else:
-                print(f"API request failed with status code: {response.status_code}")
-                print(f"Response content: {response.text[:200]}...")
-                return []
+        if uuid:
+            # اگر UUID داریم، مستقیماً کانفیگ‌ها را دریافت می‌کنیم
+            return get_user_configs_by_uuid(url, proxy_path, api_key, uuid)
         else:
-            print("Invalid URL path, couldn't extract proxy_path and api_key")
-            return []
+            # اگر UUID نداریم، لیست تمام کاربران را برمی‌گردانیم
+            return get_all_users(url, proxy_path, api_key)
     except Exception as e:
-        print(f"Error in select API call: {str(e)}")
-        return []
+        print(f"خطا در دریافت کانفیگ‌ها: {str(e)}")
+        return None
 
 def add_user(proxy_path: str, api_key: str, user_data: dict) -> dict:
     """
@@ -672,3 +622,68 @@ def find(url, uuid):
     finally:
         # بازگرداندن URL قبلی
         HIDDIFY_PANEL_URL = old_url
+
+def get_user_configs_by_uuid(url: str, proxy_path: str, api_key: str, uuid: str) -> dict:
+    """
+    دریافت کانفیگ‌های کاربر با استفاده از UUID
+    """
+    headers = {"Hiddify-API-Key": api_key}
+    try:
+        response = requests.get(
+            f"{url}/{proxy_path}/{uuid}/api/v2/user/all-configs/",
+            headers=headers
+        )
+        response.raise_for_status()
+        return response.json()
+    except HTTPError as e:
+        if e.response.status_code == 401:
+            raise HTTPError("خطای احراز هویت! کلید API نامعتبر است.")
+        elif e.response.status_code == 404:
+            raise HTTPError(f"مسیر نامعتبر یا کاربر با UUID '{uuid}' یافت نشد.")
+        raise e
+
+def get_user_by_uuid(url: str, proxy_path: str, api_key: str, uuid: str) -> dict:
+    """
+    دریافت اطلاعات کاربر با استفاده از UUID
+    """
+    headers = {"Hiddify-API-Key": api_key}
+    try:
+        response = requests.get(
+            f"{url}/{proxy_path}/api/v2/admin/user/{uuid}/",
+            headers=headers
+        )
+        response.raise_for_status()
+        return response.json()
+    except HTTPError as e:
+        if e.response.status_code == 401:
+            raise HTTPError("خطای احراز هویت! کلید API نامعتبر است.")
+        elif e.response.status_code == 404:
+            raise HTTPError(f"کاربر با UUID '{uuid}' یافت نشد.")
+        raise e
+
+def get_all_users(url: str, proxy_path: str, api_key: str) -> list:
+    """
+    دریافت لیست تمام کاربران
+    """
+    headers = {"Hiddify-API-Key": api_key}
+    try:
+        response = requests.get(
+            f"{url}/{proxy_path}/api/v2/admin/user/",
+            headers=headers
+        )
+        response.raise_for_status()
+        return response.json()
+    except HTTPError as e:
+        if e.response.status_code == 401:
+            raise HTTPError("خطای احراز هویت! کلید API نامعتبر است.")
+        raise e
+
+def get_user_by_username(url: str, proxy_path: str, api_key: str, username: str) -> dict:
+    """
+    پیدا کردن کاربر با استفاده از نام کاربری
+    """
+    users = get_all_users(url, proxy_path, api_key)
+    for user in users:
+        if user.get("name") == username:
+            return user
+    return None
