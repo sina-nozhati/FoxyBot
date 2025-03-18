@@ -204,7 +204,7 @@ def renewal_from_wallet_confirm(message: Message):
         bot.send_message(message.chat.id, MESSAGES['UNKNOWN_ERROR'],
                          reply_markup=main_menu_keyboard_markup())
         return
-    last_reset_time = datetime.now().strftime("%Y-%m-%d")    
+    last_reset_time = datetime.datetime.now().strftime("%Y-%m-%d")    
     sub = utils.find_order_subscription_by_uuid(uuid) 
     if not sub:
         bot.send_message(message.chat.id, MESSAGES['UNKNOWN_ERROR'],
@@ -255,7 +255,7 @@ def renewal_from_wallet_confirm(message: Message):
 
     # Add New Order
     order_id = random.randint(1000000, 9999999)
-    created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    created_at = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     status = USERS_DB.add_order(order_id, message.chat.id,user_info_process['name'], plan_id, created_at)
     if not status:
         bot.send_message(message.chat.id,
@@ -308,7 +308,7 @@ def next_step_send_screenshot(message, charge_wallet):
     with open(path_recp, 'wb') as new_file:
         new_file.write(downloaded_file)
 
-    created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    created_at = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     payment_method = "Card"
 
@@ -377,7 +377,7 @@ def next_step_send_name_for_buy_from_wallet(message: Message, plan):
         message = bot.send_message(message.chat.id, MESSAGES['REQUEST_SEND_NAME'])
         bot.register_next_step_handler(message, next_step_send_name_for_buy_from_wallet, plan)
         return
-    created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    created_at = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     paid_amount = plan['price']
 
     order_id = random.randint(1000000, 9999999)
@@ -1159,7 +1159,7 @@ def start_bot(message: Message):
             print(f"Error sending welcome message to user {message.from_user.id}: {e}")
     else:
         print(f"User {message.from_user.id} does not exist in database, adding new user")
-        created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        created_at = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         status = USERS_DB.add_user(telegram_id=message.chat.id,username=message.from_user.username, full_name=message.from_user.full_name, created_at=created_at)
         if not status:
             print(f"Error adding user {message.from_user.id} to database")
@@ -1466,4 +1466,3 @@ def start():
         print(colored(f"Error in bot polling: {e}", "red"))
         logging.error(f"Error in bot polling: {e}")
         exit(1)
-
