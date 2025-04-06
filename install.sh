@@ -8,12 +8,13 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Welcome message
-echo -e "${BLUE}================================================${NC}"
-echo -e "${BLUE}           FoxyVPN Bot Installer                ${NC}"
-echo -e "${BLUE}================================================${NC}"
-echo -e "${GREEN}This script will automatically install FoxyVPN Bot.${NC}"
-echo -e "${YELLOW}Note: You need sudo access to run this script.${NC}"
+echo -e "${RED}================================================${NC}"
+echo -e "${RED}           FoxyVPN Bot Installer                ${NC}"
+echo -e "${RED}================================================${NC}"
 echo ""
+
+# Installation directory
+INSTALL_DIR="/opt/foxybot"
 
 # Check sudo access
 if [[ $EUID -ne 0 ]]; then
@@ -50,81 +51,101 @@ validate_hiddify_panel() {
     
     echo -e "${BLUE}Validating Hiddify panel...${NC}"
     
-    # Test using ping endpoint
-    local response=$(curl -s -o /dev/null -w "%{http_code}" -H "Hiddify-API-Key: ${api_key}" "https://${domain}/${proxy_path}/api/v2/panel/ping/")
+    # Call the ping API endpoint
+    local response=$(curl -s -o /dev/null -w "%{http_code}" "https://${domain}/${proxy_path}/api/v2/panel/ping/" -H "Hiddify-API-Key: ${api_key}")
     
     if [[ "$response" == "200" ]]; then
         echo -e "${GREEN}✓ Panel validated successfully!${NC}"
         
-        # Get panel info for additional verification
-        local panel_info=$(curl -s -H "Hiddify-API-Key: ${api_key}" "https://${domain}/${proxy_path}/api/v2/panel/info/")
-        local panel_version=$(echo $panel_info | jq -r '.version // "Unknown"')
-        
-        echo -e "${GREEN}✓ Panel version: ${panel_version}${NC}"
-        return 0
-    else
-        echo -e "${RED}✗ Failed to validate panel. HTTP status: ${response}${NC}"
-        echo -e "${YELLOW}Make sure the domain, proxy path and API key are correct.${NC}"
-        return 1
-    fi
-}
-
-# Function to validate Telegram bot token
-validate_telegram_token() {
-    local token=$1
-    local bot_type=$2
-    
-    echo -e "${BLUE}Validating ${bot_type} Telegram bot...${NC}"
-    
-    # Get bot info from Telegram API
-    local response=$(curl -s "https://api.telegram.org/bot${token}/getMe")
-    local success=$(echo $response | jq -r '.ok')
-    
-    if [[ "$success" == "true" ]]; then
-        local bot_username=$(echo $response | jq -r '.result.username')
-        local bot_name=$(echo $response | jq -r '.result.first_name')
-        
-        echo -e "${GREEN}✓ Bot validated successfully!${NC}"
-        echo -e "${GREEN}✓ Bot Name: ${bot_name}${NC}"
-        echo -e "${GREEN}✓ Username: @${bot_username}${NC}"
-        
-        # Confirm bot details
-        read -p "Is this the correct ${bot_type} bot? (y/n): " confirm
-        if [[ $confirm != "y" && $confirm != "Y" ]]; then
-            return 1
+        # Get panel version if available
+        local version_response=$(curl -s "https://${domain}/${proxy_path}/api/v2/admin/version/" -H "Hiddify-API-Key: ${api_key}")
+        if [[ $version_response == *"version"* ]]; then
+            local panel_version=$(echo $version_response | grep -o '"version":"[^"]*' | sed 's/"version":"//g')
+            echo -e "${GREEN}✓ Panel version: ${panel_version}${NC}"
         fi
         
         return 0
     else
-        local error_desc=$(echo $response | jq -r '.description // "Unknown error"')
-        echo -e "${RED}✗ Failed to validate bot token: ${error_desc}${NC}"
+        echo -e "${RED}✗ Failed to validate panel. HTTP response: ${response}${NC}"
         return 1
     fi
 }
 
-# Get and validate Admin Bot Token
-while true; do
-    read -p "Admin Bot Token: " ADMIN_BOT_TOKEN
+# Function to validate user proxy path with a specific user UUID
+validate_user_proxy_path() {
+    local domain=$1
+    local admin_proxy_path=$2
+    local api_key=$3
+    local user_proxy_path=$4
     
-    if validate_telegram_token "$ADMIN_BOT_TOKEN" "Admin"; then
+    echo -e "${BLUE}Validating user proxy path...${NC}"
+    
+    # First get a user UUID from the panel
+    local users_response=$(curl -s "https://${domain}/${admin_proxy_path}/api/v2/admin/user/" -H "Hiddify-API-Key: ${api_key}")
+    
+    if [[ $users_response == "[]" || $users_response != *"uuid"* ]]; then
+        echo -e "${YELLOW}⚠️ No users found in panel. Cannot validate user proxy path.${NC}"
+        return 0  # Continue anyway
+    fi
+    
+    # Extract first user UUID
+    local user_uuid=$(echo $users_response | grep -o '"uuid":"[^"]*' | head -1 | sed 's/"uuid":"//g')
+    local user_name=$(echo $users_response | grep -o '"name":"[^"]*' | head -1 | sed 's/"name":"//g')
+    
+    if [[ -z "$user_uuid" ]]; then
+        echo -e "${YELLOW}⚠️ Could not extract user UUID. Skipping user proxy validation.${NC}"
+        return 0  # Continue anyway
+    fi
+    
+    echo -e "${BLUE}Using user: ${user_name} (UUID: ${user_uuid})${NC}"
+    
+    # Try to access the user profile
+    local user_response=$(curl -s "https://${domain}/${user_proxy_path}/${user_uuid}/api/v2/user/me/")
+    
+    if [[ $user_response == *"profile_title"* ]]; then
+        local profile_title=$(echo $user_response | grep -o '"profile_title":"[^"]*' | sed 's/"profile_title":"//g')
+        echo -e "${GREEN}✓ User profile validated successfully!${NC}"
+        echo -e "${GREEN}✓ Profile title: ${profile_title}${NC}"
+        return 0
+    else
+        echo -e "${RED}✗ Failed to validate user proxy path. Could not retrieve user profile.${NC}"
+        return 1
+    fi
+}
+
+# Get Telegram Bot tokens
+while true; do
+    read -p "Enter Admin Bot Token: " ADMIN_BOT_TOKEN
+    
+    # Validate Admin Bot Token
+    echo -e "${BLUE}Validating Admin Bot Token...${NC}"
+    response=$(curl -s "https://api.telegram.org/bot${ADMIN_BOT_TOKEN}/getMe")
+    
+    if [[ $response == *"\"ok\":true"* ]]; then
+        bot_username=$(echo $response | grep -o '"username":"[^"]*' | sed 's/"username":"//g')
+        echo -e "${GREEN}✓ Admin Bot Token is valid (Bot: @${bot_username})${NC}"
         break
     else
-        echo -e "${YELLOW}Please enter a valid Admin Bot Token.${NC}"
+        echo -e "${RED}✗ Invalid Admin Bot Token. Please try again.${NC}"
     fi
 done
 
-# Get and validate User Bot Token
 while true; do
-    read -p "User Bot Token: " USER_BOT_TOKEN
+    read -p "Enter User Bot Token: " USER_BOT_TOKEN
     
-    if validate_telegram_token "$USER_BOT_TOKEN" "User"; then
+    # Validate User Bot Token
+    echo -e "${BLUE}Validating User Bot Token...${NC}"
+    response=$(curl -s "https://api.telegram.org/bot${USER_BOT_TOKEN}/getMe")
+    
+    if [[ $response == *"\"ok\":true"* ]]; then
+        bot_username=$(echo $response | grep -o '"username":"[^"]*' | sed 's/"username":"//g')
+        echo -e "${GREEN}✓ User Bot Token is valid (Bot: @${bot_username})${NC}"
         break
     else
-        echo -e "${YELLOW}Please enter a valid User Bot Token.${NC}"
+        echo -e "${RED}✗ Invalid User Bot Token. Please try again.${NC}"
     fi
 done
 
-# Validate Hiddify panel information
 while true; do
     # دریافت لینک کامل پنل و استخراج اجزای آن
     read -p "Enter complete Hiddify Admin Panel URL (e.g., https://domain.com/admin_path/api_key/): " HIDDIFY_FULL_URL
@@ -154,7 +175,20 @@ HIDDIFY_API_BASE_URL="https://${HIDDIFY_DOMAIN}"
 HIDDIFY_API_VERSION="v2"
 
 # دریافت مسیر پروکسی کاربران
-read -p "Enter User Proxy Path: " HIDDIFY_USER_PROXY_PATH
+while true; do
+    read -p "Enter User Proxy Path: " HIDDIFY_USER_PROXY_PATH
+    
+    # اعتبارسنجی مسیر پروکسی کاربران
+    if validate_user_proxy_path "$HIDDIFY_DOMAIN" "$HIDDIFY_PROXY_PATH" "$HIDDIFY_API_KEY" "$HIDDIFY_USER_PROXY_PATH"; then
+        break
+    else
+        echo -e "${YELLOW}Would you like to try again or continue anyway? (t/c): ${NC}"
+        read -p "" TC_ANSWER
+        if [[ "$TC_ANSWER" == "c" ]]; then
+            break
+        fi
+    fi
+done
 
 # Get payment information
 read -p "Payment Card Number: " PAYMENT_CARD_NUMBER
@@ -267,7 +301,7 @@ ADMIN_BOT_TOKEN=${ADMIN_BOT_TOKEN}
 USER_BOT_TOKEN=${USER_BOT_TOKEN}
 
 # PostgreSQL Database Settings
-DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
 
 # Security Settings
 SECRET_KEY=${SECRET_KEY}
