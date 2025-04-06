@@ -24,7 +24,7 @@ fi
 
 # Check required tools
 echo -e "${BLUE}Checking required tools...${NC}"
-for tool in curl jq; do
+for tool in curl jq git; do
     if ! command -v $tool &> /dev/null; then
         echo -e "${YELLOW}Installing $tool...${NC}"
         apt-get update && apt-get install -y $tool
@@ -145,6 +145,9 @@ HIDDIFY_API_VERSION="v2"
 # Get payment information
 read -p "Payment Card Number: " PAYMENT_CARD_NUMBER
 
+# Get admin telegram ID for notifications
+read -p "Admin Telegram ID (for notifications): " ADMIN_TELEGRAM_ID
+
 # Get database information
 read -p "PostgreSQL Username (default: postgres): " DB_USER
 DB_USER=${DB_USER:-postgres}
@@ -202,9 +205,33 @@ echo -e "${GREEN}Database created successfully.${NC}"
 echo ""
 
 # Create installation directory
-echo -e "${BLUE}Copying files...${NC}"
+echo -e "${BLUE}Setting up installation directory...${NC}"
 mkdir -p ${INSTALL_DIR}
-cp -r . ${INSTALL_DIR}
+
+# Check if we are running from the cloned repo or standalone script
+if [ -d "./bot" ] && [ -f "./requirements.txt" ]; then
+    echo -e "${BLUE}Copying files from current directory...${NC}"
+    cp -r . ${INSTALL_DIR}
+else
+    echo -e "${BLUE}Downloading the latest version from GitHub...${NC}"
+    # Install git if needed
+    if ! command -v git &> /dev/null; then
+        echo -e "${YELLOW}Installing git...${NC}"
+        apt-get update && apt-get install -y git
+    fi
+    
+    # Clone the repository
+    git clone https://github.com/sina-nozhati/FoxyBot.git ${INSTALL_DIR}/temp
+    
+    # Move files from the cloned directory to the installation directory
+    cp -r ${INSTALL_DIR}/temp/* ${INSTALL_DIR}/
+    cp -r ${INSTALL_DIR}/temp/.gitignore ${INSTALL_DIR}/ 2>/dev/null || :
+    
+    # Remove temporary directory
+    rm -rf ${INSTALL_DIR}/temp
+fi
+
+echo -e "${GREEN}Files copied to ${INSTALL_DIR} successfully.${NC}"
 
 # Create virtual environment and install dependencies
 echo -e "${BLUE}Creating virtual environment and installing dependencies...${NC}"
@@ -263,12 +290,34 @@ mkdir -p ${INSTALL_DIR}/logs
 
 # Test connections
 echo -e "${BLUE}Testing system connections...${NC}"
-cd ${INSTALL_DIR}
-python3 bot/test_connection.py
-
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Connection test failed. Please check your settings and try again.${NC}"
-    echo -e "${YELLOW}You can run the test manually with: 'cd ${INSTALL_DIR} && python3 bot/test_connection.py'${NC}"
+if [ -f "${INSTALL_DIR}/bot/test_connection.py" ]; then
+    cd ${INSTALL_DIR}
+    # Make sure dependencies are installed
+    source venv/bin/activate
+    
+    # Install required packages for test if needed
+    pip install requests python-dotenv psycopg2-binary
+    
+    # Run the test
+    python3 bot/test_connection.py
+    TEST_RESULT=$?
+    
+    if [ $TEST_RESULT -ne 0 ]; then
+        echo -e "${RED}Connection test failed. Please check your settings and try again.${NC}"
+        echo -e "${YELLOW}You can run the test manually with: 'cd ${INSTALL_DIR} && source venv/bin/activate && python3 bot/test_connection.py'${NC}"
+        
+        # Continue anyway?
+        read -p "Continue with installation anyway? (y/n): " CONTINUE
+        if [[ $CONTINUE != "y" && $CONTINUE != "Y" ]]; then
+            echo -e "${RED}Installation canceled.${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${GREEN}Connection test passed successfully!${NC}"
+    fi
+else
+    echo -e "${RED}Cannot find test_connection.py script. Skipping connection test.${NC}"
+    echo -e "${YELLOW}After installation, you can run the test manually with: 'cd ${INSTALL_DIR} && source venv/bin/activate && python3 bot/test_connection.py'${NC}"
     
     # Continue anyway?
     read -p "Continue with installation anyway? (y/n): " CONTINUE
@@ -276,8 +325,6 @@ if [ $? -ne 0 ]; then
         echo -e "${RED}Installation canceled.${NC}"
         exit 1
     fi
-else
-    echo -e "${GREEN}Connection test passed successfully!${NC}"
 fi
 
 # Create systemd service
@@ -286,16 +333,20 @@ cat > /etc/systemd/system/foxybot.service << EOL
 [Unit]
 Description=FoxyVPN Telegram Bot
 After=network.target postgresql.service
+Wants=postgresql.service
 
 [Service]
 User=root
 Group=root
 WorkingDirectory=${INSTALL_DIR}
 ExecStart=${INSTALL_DIR}/venv/bin/python ${INSTALL_DIR}/bot/main.py
+Environment=PYTHONPATH=${INSTALL_DIR}
 Restart=always
 RestartSec=5
 StandardOutput=journal
 StandardError=journal
+TimeoutStartSec=60
+TimeoutStopSec=30
 
 [Install]
 WantedBy=multi-user.target
@@ -305,6 +356,43 @@ EOL
 systemctl daemon-reload
 systemctl enable foxybot.service
 systemctl start foxybot.service
+
+# Check if the service is running
+echo -e "${BLUE}Checking service status...${NC}"
+sleep 5  # Give the service some time to start
+service_status=$(systemctl is-active foxybot.service)
+
+if [ "$service_status" == "active" ]; then
+    echo -e "${GREEN}Service is running successfully!${NC}"
+else
+    echo -e "${RED}Service is not running! Status: ${service_status}${NC}"
+    echo -e "${YELLOW}Please check logs with: journalctl -u foxybot.service -n 50${NC}"
+    
+    # Continue anyway?
+    read -p "Continue anyway? (y/n): " CONTINUE
+    if [[ $CONTINUE != "y" && $CONTINUE != "Y" ]]; then
+        echo -e "${RED}Installation completed but service is not running properly.${NC}"
+    fi
+fi
+
+# Send notification to admin
+echo -e "${BLUE}Sending notification to Admin via Telegram...${NC}"
+curl -s -X POST "https://api.telegram.org/bot${ADMIN_BOT_TOKEN}/sendMessage" \
+    -d chat_id="${ADMIN_TELEGRAM_ID:-0}" \
+    -d text="🎉 FoxyVPN Bot has been successfully installed!
+    
+🖥️ Server Info:
+• Hostname: $(hostname)
+• IP: $(curl -s ifconfig.me)
+
+⚙️ Installation Details:
+• Path: ${INSTALL_DIR}
+• Hiddify Panel: ${HIDDIFY_API_BASE_URL}
+• Database: ${DB_NAME}
+
+Use /start command to begin using the bot.
+" \
+    -d parse_mode="Markdown" > /dev/null
 
 echo -e "${GREEN}Systemd service created and enabled successfully.${NC}"
 echo ""
@@ -318,7 +406,7 @@ echo -e "${YELLOW}Important Information:${NC}"
 echo -e "• Installation Path: ${INSTALL_DIR}"
 echo -e "• Settings File: ${INSTALL_DIR}/.env"
 echo -e "• Logs: ${INSTALL_DIR}/logs/foxybot.log"
-echo -e "• Test Connection Command: ${GREEN}cd ${INSTALL_DIR} && python3 bot/test_connection.py${NC}"
+echo -e "• Test Connection Command: ${GREEN}cd ${INSTALL_DIR} && source venv/bin/activate && python3 bot/test_connection.py${NC}"
 echo -e "• Service Status Command: ${GREEN}systemctl status foxybot.service${NC}"
 echo -e "• View Logs Command: ${GREEN}journalctl -u foxybot.service -f${NC}"
 echo ""

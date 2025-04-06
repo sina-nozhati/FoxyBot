@@ -16,8 +16,8 @@ from sqlalchemy.orm import sessionmaker
 
 from config import USER_BOT_TOKEN, DATABASE_URL, DEFAULT_PLANS, PAYMENT_CARD_NUMBER
 from db import models, crud
-from utils.hiddify import HiddifyAPI
-from utils.payment import PaymentManager
+from bot.utils.hiddify import HiddifyAPI
+from bot.utils.payment import PaymentManager
 
 # تنظیمات لاگینگ
 logging.basicConfig(
