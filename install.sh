@@ -267,7 +267,7 @@ ADMIN_BOT_TOKEN=${ADMIN_BOT_TOKEN}
 USER_BOT_TOKEN=${USER_BOT_TOKEN}
 
 # PostgreSQL Database Settings
-DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
 
 # Security Settings
 SECRET_KEY=${SECRET_KEY}

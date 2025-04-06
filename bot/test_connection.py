@@ -134,8 +134,17 @@ def check_hiddify_panel():
                         try:
                             user_response = requests.get(user_url, timeout=10)
                             if user_response.status_code == 200:
-                                logger.info(f"✅ User proxy path validated successfully")
-                                return True
+                                # بررسی اطلاعات پروفایل کاربر
+                                user_data = user_response.json()
+                                if 'profile_title' in user_data:
+                                    profile_title = user_data.get('profile_title', '')
+                                    logger.info(f"✅ User profile title: {profile_title}")
+                                    logger.info(f"✅ User proxy path validated successfully")
+                                    return True
+                                else:
+                                    logger.warning("⚠️ User profile title not found in response")
+                                    logger.info(f"✅ User proxy path accessible but profile data incomplete")
+                                    return True
                             else:
                                 logger.error(f"❌ Could not validate user proxy path: HTTP {user_response.status_code}")
                                 return False

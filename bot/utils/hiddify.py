@@ -221,7 +221,17 @@ class HiddifyAPI:
         try:
             user_url = f"{self._get_user_url(uuid)}/api/v2/user/me/"
             response = requests.get(user_url)
-            return response.status_code == 200
+            
+            if response.status_code == 200:
+                # بررسی اینکه آیا پاسخ دارای عنوان پروفایل می‌باشد
+                user_data = response.json()
+                if 'profile_title' in user_data:
+                    print(f"User profile title: {user_data['profile_title']}")
+                    return True
+                else:
+                    print("User profile title not found in response")
+                    return False
+            return False
         except Exception as e:
             print(f"Error checking user panel access: {e}")
             return False
