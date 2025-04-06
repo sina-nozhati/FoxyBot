@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 import asyncio
+import signal
 from bot.admin_bot import AdminBot
 from bot.user_bot import UserBot
 from config import ADMIN_BOT_TOKEN, USER_BOT_TOKEN
@@ -12,6 +13,15 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+# سیگنال برای توقف برنامه
+stop_event = asyncio.Event()
+
+# تنظیم هندلر برای سیگنال‌های سیستمی
+def signal_handler():
+    """هندلر برای مدیریت سیگنال‌های سیستمی (مانند Ctrl+C)"""
+    logger.info("Received stop signal! Shutting down...")
+    stop_event.set()
 
 async def main():
     """تابع اصلی برای اجرای ربات‌ها"""
@@ -37,45 +47,60 @@ async def main():
         logger.info("Initializing User Bot...")
         user_bot = UserBot()
         
-        # اجرای همزمان ربات‌ها
-        logger.info("Starting both bots in polling mode...")
+        # تنظیم مدیریت سیگنال‌ها برای توقف نرم ربات‌ها
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            asyncio.get_event_loop().add_signal_handler(
+                sig, signal_handler
+            )
         
-        # در نسخه 20 کتابخانه python-telegram-bot، باید از روش متفاوتی برای اجرای همزمان ربات‌ها استفاده کنیم
-        # به جای asyncio.gather، دو تا ربات را به صورت مجزا اجرا می‌کنیم
-        
+        # راه‌اندازی ربات‌های ادمین و کاربر به صورت همزمان
         admin_app = admin_bot.application
         user_app = user_bot.application
         
-        # اینیشیالایز کردن هر دو ربات
+        # اینیشیالایز کردن ربات‌ها
         await admin_app.initialize()
         await user_app.initialize()
         
-        # شروع کردن پولینگ برای هر دو ربات
+        # شروع ربات‌ها
         await admin_app.start()
         await user_app.start()
         
-        # استفاده از ساختار try-finally برای اطمینان از بسته شدن صحیح ربات‌ها
-        try:
-            # ماندن در حالت اجرا تا زمانی که کاربر کلید کنترل+C را فشار دهد
-            await admin_app.updater.start_polling(allowed_updates=["message", "callback_query", "my_chat_member"])
-            await user_app.updater.start_polling(allowed_updates=["message", "callback_query", "my_chat_member"])
-            
-            # ایجاد یک سیگنال برای توقف برنامه با کلید کنترل+C
-            stop_signal = asyncio.Future()
-            await stop_signal
-            
-        finally:
-            # خاتمه دادن به هر دو ربات
-            await admin_app.stop()
-            await user_app.stop()
-            
-            # شات‌داون کردن نهایی
-            await admin_app.shutdown()
-            await user_app.shutdown()
+        # شروع پولینگ برای هر دو ربات
+        await admin_app.updater.start_polling(
+            allowed_updates=["message", "callback_query", "my_chat_member", "chat_member"]
+        )
+        logger.info("Admin bot polling started successfully")
+        
+        await user_app.updater.start_polling(
+            allowed_updates=["message", "callback_query", "my_chat_member", "chat_member"]
+        )
+        logger.info("User bot polling started successfully")
+        
+        # انتظار برای سیگنال توقف
+        logger.info("Both bots are running. Press Ctrl+C to stop.")
+        await stop_event.wait()
         
     except Exception as e:
         logger.error(f"Error starting bots: {e}")
-        raise
+        logger.error(f"Fatal error: Cannot start bots. Check the token and internet connection.")
+        sys.exit(1)
+        
+    finally:
+        # متوقف کردن ربات‌ها در صورت وجود
+        logger.info("Stopping bots...")
+        try:
+            # توقف و شات‌داون ربات‌ها
+            if admin_app.is_initialized():
+                await admin_app.stop()
+                await admin_app.shutdown()
+                
+            if user_app.is_initialized():
+                await user_app.stop()
+                await user_app.shutdown()
+                
+            logger.info("Both bots have been shut down gracefully.")
+        except Exception as e:
+            logger.error(f"Error shutting down bots: {e}")
 
 if __name__ == "__main__":
     # تنظیم مسیر Python برای import کردن ماژول‌ها

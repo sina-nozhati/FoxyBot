@@ -83,6 +83,55 @@ HIDDIFY_API_KEY=your_api_key
 python bot/main.py
 ```
 
+## 🔄 به‌روزرسانی سیستم
+
+برای به‌روزرسانی ربات به آخرین نسخه، از دستور زیر استفاده کنید:
+
+```bash
+wget -O update_bot.sh https://raw.githubusercontent.com/sina-nozhati/foxybot/main/update_bot.sh
+chmod +x update_bot.sh
+sudo ./update_bot.sh
+```
+
+یا اگر قبلاً فایل را دانلود کرده‌اید:
+
+```bash
+cd /opt/foxybot
+sudo ./update_bot.sh
+```
+
+## 🔍 عیب‌یابی و دستورات مفید
+
+### بررسی وضعیت سرویس
+```bash
+systemctl status foxybot.service
+```
+
+### مشاهده لاگ‌ها
+```bash
+journalctl -u foxybot.service -f
+```
+
+### راه‌اندازی مجدد سرویس
+```bash
+systemctl restart foxybot.service
+```
+
+### بررسی اتصال‌ها
+```bash
+cd /opt/foxybot && source venv/bin/activate && python3 bot/test_connection.py
+```
+
+### تنظیم مجدد رمز عبور دیتابیس PostgreSQL
+```bash
+sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'admin1234';"
+```
+
+### بررسی وضعیت دیتابیس
+```bash
+sudo systemctl status postgresql
+```
+
 ## 🧩 ساختار پروژه
 
 ```
