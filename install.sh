@@ -57,12 +57,11 @@ validate_hiddify_panel() {
     if [[ "$response" == "200" ]]; then
         echo -e "${GREEN}✓ Panel validated successfully!${NC}"
         
-        # Get panel version if available
-        local version_response=$(curl -s "https://${domain}/${proxy_path}/api/v2/admin/version/" -H "Hiddify-API-Key: ${api_key}")
-        if [[ $version_response == *"version"* ]]; then
-            local panel_version=$(echo $version_response | grep -o '"version":"[^"]*' | sed 's/"version":"//g')
-            echo -e "${GREEN}✓ Panel version: ${panel_version}${NC}"
-        fi
+        # Get panel info for additional verification
+        local panel_info=$(curl -s -H "Hiddify-API-Key: ${api_key}" "https://${domain}/${proxy_path}/api/v2/panel/info/")
+        local panel_version=$(echo $panel_info | grep -o '"version":"[^"]*' | sed 's/"version":"//g')
+        
+        echo -e "${GREEN}✓ Panel version: ${panel_version}${NC}"
         
         return 0
     else
