@@ -36,7 +36,7 @@ FoxyVPN Bot یک سیستم مدیریت VPN مبتنی بر پنل Hiddify اس
 ### نصب خودکار
 
 ```bash
-wget -O install.sh https://raw.githubusercontent.com/username/foxybot/main/install.sh
+wget -O install.sh https://raw.githubusercontent.com/sina-nozhati/foxybot/main/install.sh
 chmod +x install.sh
 sudo ./install.sh
 ```
