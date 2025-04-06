@@ -252,6 +252,10 @@ sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_US
 echo -e "${GREEN}Database created successfully.${NC}"
 echo ""
 
+# Initialize database
+echo -e "${YELLOW}Creating database tables...${NC}"
+python3 db/create_tables.py
+
 # Create installation directory
 echo -e "${BLUE}Setting up installation directory...${NC}"
 mkdir -p ${INSTALL_DIR}
