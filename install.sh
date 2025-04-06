@@ -126,21 +126,35 @@ done
 
 # Validate Hiddify panel information
 while true; do
-    read -p "Hiddify Panel Domain (without https://): " HIDDIFY_DOMAIN
-    read -p "Hiddify Admin Proxy Path: " HIDDIFY_PROXY_PATH
-    read -p "Hiddify User Proxy Path: " HIDDIFY_USER_PROXY_PATH
-    read -p "Hiddify API Key: " HIDDIFY_API_KEY
-    
-    if validate_hiddify_panel "$HIDDIFY_DOMAIN" "$HIDDIFY_PROXY_PATH" "$HIDDIFY_API_KEY"; then
-        break
+    # دریافت لینک کامل پنل و استخراج اجزای آن
+    read -p "Enter complete Hiddify Admin Panel URL (e.g., https://domain.com/admin_path/api_key/): " HIDDIFY_FULL_URL
+
+    # استخراج اجزای URL
+    if [[ $HIDDIFY_FULL_URL =~ https?://([^/]+)/([^/]+)/([^/]+) ]]; then
+        HIDDIFY_DOMAIN="${BASH_REMATCH[1]}"
+        HIDDIFY_PROXY_PATH="${BASH_REMATCH[2]}"
+        HIDDIFY_API_KEY="${BASH_REMATCH[3]}"
+        
+        echo -e "${GREEN}✅ Successfully extracted panel information:${NC}"
+        echo -e "Domain: ${HIDDIFY_DOMAIN}"
+        echo -e "Admin Proxy Path: ${HIDDIFY_PROXY_PATH}"
+        echo -e "API Key: ${HIDDIFY_API_KEY}"
+        
+        # اعتبارسنجی پنل
+        if validate_hiddify_panel "$HIDDIFY_DOMAIN" "$HIDDIFY_PROXY_PATH" "$HIDDIFY_API_KEY"; then
+            break
+        fi
     else
-        echo -e "${YELLOW}Please enter valid Hiddify panel information.${NC}"
+        echo -e "${RED}❌ Failed to parse URL. Please enter valid URL format.${NC}"
     fi
 done
 
 # Construct Hiddify API Base URL
 HIDDIFY_API_BASE_URL="https://${HIDDIFY_DOMAIN}"
 HIDDIFY_API_VERSION="v2"
+
+# دریافت مسیر پروکسی کاربران
+read -p "Enter User Proxy Path: " HIDDIFY_USER_PROXY_PATH
 
 # Get payment information
 read -p "Payment Card Number: " PAYMENT_CARD_NUMBER
@@ -152,7 +166,8 @@ read -p "Admin Telegram ID (for notifications): " ADMIN_TELEGRAM_ID
 read -p "PostgreSQL Username (default: postgres): " DB_USER
 DB_USER=${DB_USER:-postgres}
 
-read -p "PostgreSQL Password: " DB_PASSWORD
+read -p "PostgreSQL Password (default: admin1234): " DB_PASSWORD
+DB_PASSWORD=${DB_PASSWORD:-admin1234}
 
 read -p "Database Name (default: foxybot): " DB_NAME
 DB_NAME=${DB_NAME:-foxybot}

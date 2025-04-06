@@ -87,47 +87,70 @@ def check_hiddify_panel():
             return False
         
         data = response.json()
-        if data.get('msg') != 'pong':
+        logger.info(f"✅ Admin panel responded with: {data}")
+        
+        # Check if response contains 'msg' with 'PONG' or 'pong'
+        if 'msg' in data and ('PONG' in data['msg'] or 'pong' in data['msg']):
+            logger.info(f"✅ Admin panel connection validated successfully!")
+            
+            # Check if we can get users list (admin functionality)
+            users_url = f"{base_url}/{admin_proxy_path}/api/v2/admin/user/"
+            users_response = requests.get(
+                users_url,
+                headers={"Hiddify-API-Key": api_key},
+                timeout=10
+            )
+            
+            if users_response.status_code != 200:
+                logger.warning(f"⚠️ Could not get users list: HTTP {users_response.status_code}")
+                return False
+            else:
+                users = users_response.json()
+                users_count = len(users)
+                logger.info(f"✅ Successfully retrieved users list ({users_count} users)")
+                
+                # Validate user proxy path if we have users
+                if users_count > 0:
+                    logger.info("🔍 Validating user proxy path...")
+                    
+                    # Find a user (prefer one named 'default' if exists)
+                    target_user = None
+                    for user in users:
+                        if user.get('name', '').lower() == 'default':
+                            target_user = user
+                            break
+                    
+                    # If no 'default' user found, use the first one
+                    if not target_user and users:
+                        target_user = users[0]
+                    
+                    if target_user and 'uuid' in target_user:
+                        user_uuid = target_user.get('uuid')
+                        user_name = target_user.get('name')
+                        logger.info(f"✅ Using user: {user_name} (UUID: {user_uuid})")
+                        
+                        # Try to access user profile URL
+                        user_url = f"{base_url}/{user_proxy_path}/{user_uuid}/api/v2/user/me/"
+                        try:
+                            user_response = requests.get(user_url, timeout=10)
+                            if user_response.status_code == 200:
+                                logger.info(f"✅ User proxy path validated successfully")
+                                return True
+                            else:
+                                logger.error(f"❌ Could not validate user proxy path: HTTP {user_response.status_code}")
+                                return False
+                        except requests.exceptions.RequestException as e:
+                            logger.error(f"❌ Could not validate user proxy path: {str(e)}")
+                            return False
+                else:
+                    logger.warning("⚠️ No users found to validate user proxy path")
+                    # Continue anyway since admin panel works
+                    return True
+            
+            return True
+        else:
             logger.error(f"❌ Unexpected response from admin panel: {data}")
             return False
-        
-        logger.info(f"✅ Admin panel connection validated successfully")
-        
-        # Check if we can get users list (admin functionality)
-        users_url = f"{base_url}/{admin_proxy_path}/api/v2/admin/user/"
-        users_response = requests.get(
-            users_url,
-            headers={"Hiddify-API-Key": api_key},
-            timeout=10
-        )
-        
-        if users_response.status_code != 200:
-            logger.warning(f"⚠️ Could not get users list: HTTP {users_response.status_code}")
-        else:
-            users_count = len(users_response.json())
-            logger.info(f"✅ Successfully retrieved users list ({users_count} users)")
-            
-            # Validate user proxy path if we have users
-            if users_count > 0:
-                logger.info("🔍 Validating user proxy path...")
-                
-                # Try to get first user's UUID
-                first_user = users_response.json()[0]
-                user_uuid = first_user.get('uuid')
-                
-                if user_uuid:
-                    # Try to access user config URL
-                    user_url = f"{base_url}/{user_proxy_path}/{user_uuid}/me/"
-                    try:
-                        user_response = requests.get(user_url, timeout=10)
-                        if user_response.status_code == 200:
-                            logger.info(f"✅ User proxy path validated successfully")
-                        else:
-                            logger.warning(f"⚠️ Could not validate user proxy path: HTTP {user_response.status_code}")
-                    except requests.exceptions.RequestException as e:
-                        logger.warning(f"⚠️ Could not validate user proxy path: {str(e)}")
-        
-        return True
         
     except requests.exceptions.RequestException as e:
         logger.error(f"❌ Failed to connect to panel: {str(e)}")

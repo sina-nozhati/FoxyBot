@@ -189,8 +189,11 @@ class HiddifyAPI:
         """Check panel status"""
         try:
             response = self._make_request("GET", "panel/ping/")
-            return response.get("msg") == "pong"
-        except:
+            if 'msg' in response and ('PONG' in response.get('msg', '') or 'pong' in response.get('msg', '')):
+                return True
+            return False
+        except Exception as e:
+            print(f"Error checking panel status: {e}")
             return False
             
     def get_user_dashboard_url(self, uuid: str) -> str:
@@ -204,3 +207,21 @@ class HiddifyAPI:
             Complete URL to user dashboard
         """
         return self._get_user_url(uuid)
+
+    def check_user_panel_access(self, uuid: str) -> bool:
+        """
+        Check if user panel is accessible with the given UUID
+        
+        Args:
+            uuid: User UUID to test
+            
+        Returns:
+            True if access is successful, False otherwise
+        """
+        try:
+            user_url = f"{self._get_user_url(uuid)}/api/v2/user/me/"
+            response = requests.get(user_url)
+            return response.status_code == 200
+        except Exception as e:
+            print(f"Error checking user panel access: {e}")
+            return False
