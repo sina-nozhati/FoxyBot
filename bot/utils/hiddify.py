@@ -1,73 +1,166 @@
 import requests
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
-from config import HIDDIFY_API_VERSION, HIDDIFY_API_BASE_URL
+from config import HIDDIFY_API_VERSION, HIDDIFY_API_BASE_URL, HIDDIFY_USER_PROXY_PATH
 
 class HiddifyAPI:
-    def __init__(self, domain: str, proxy_path: str, api_key: str):
+    def __init__(self, domain: str, proxy_path: str, api_key: str, user_proxy_path: Optional[str] = None):
+        """
+        Initialize the Hiddify API client.
+        
+        Args:
+            domain: Domain of the Hiddify panel
+            proxy_path: Admin proxy path for the API
+            api_key: API key for authentication
+            user_proxy_path: User proxy path for accessing user configurations
+        """
         self.domain = domain
-        self.proxy_path = proxy_path
+        self.proxy_path = proxy_path  # Admin proxy path
+        self.user_proxy_path = user_proxy_path or HIDDIFY_USER_PROXY_PATH  # User proxy path
         self.api_key = api_key
-        self.base_url = f"{HIDDIFY_API_BASE_URL}/{proxy_path}/api/{HIDDIFY_API_VERSION}"
+        
+        # Construct base URL correctly based on domain format
+        if '://' in domain:  # If domain already includes protocol
+            self.base_url = f"{domain}/{proxy_path}/api/{HIDDIFY_API_VERSION}"
+        else:
+            self.base_url = f"https://{domain}/{proxy_path}/api/{HIDDIFY_API_VERSION}"
+            
         self.headers = {"Hiddify-API-Key": api_key}
 
     def _make_request(self, method: str, endpoint: str, **kwargs) -> Dict:
+        """Make an API request to the Hiddify panel"""
         url = f"{self.base_url}/{endpoint}"
         response = requests.request(method, url, headers=self.headers, **kwargs)
         response.raise_for_status()
         return response.json()
+        
+    def _get_user_url(self, uuid: str = None) -> str:
+        """
+        Generate the user-specific URL for accessing configurations
+        
+        Args:
+            uuid: The user UUID
+            
+        Returns:
+            Properly formatted user URL
+        """
+        if '://' in self.domain:
+            base = f"{self.domain}/{self.user_proxy_path}"
+        else:
+            base = f"https://{self.domain}/{self.user_proxy_path}"
+            
+        if uuid:
+            return f"{base}/{uuid}"
+        return base
 
     def get_server_status(self) -> Dict:
-        """دریافت وضعیت سرور"""
+        """Get server status"""
         return self._make_request("GET", "admin/server_status/")
 
     def get_all_users(self) -> List[Dict]:
-        """دریافت لیست تمام کاربران"""
+        """Get all users"""
         return self._make_request("GET", "admin/user/")
 
     def create_user(self, user_data: Dict) -> Dict:
-        """ایجاد کاربر جدید"""
+        """Create a new user"""
         return self._make_request("POST", "admin/user/", json=user_data)
 
     def get_user(self, uuid: str) -> Dict:
-        """دریافت اطلاعات یک کاربر"""
+        """Get user information"""
         return self._make_request("GET", f"admin/user/{uuid}/")
 
     def update_user(self, uuid: str, user_data: Dict) -> Dict:
-        """بروزرسانی اطلاعات کاربر"""
+        """Update user information"""
         return self._make_request("PATCH", f"admin/user/{uuid}/", json=user_data)
 
     def delete_user(self, uuid: str) -> Dict:
-        """حذف کاربر"""
+        """Delete a user"""
         return self._make_request("DELETE", f"admin/user/{uuid}/")
 
     def get_user_configs(self, uuid: str) -> List[Dict]:
-        """دریافت تنظیمات کاربر"""
-        return self._make_request("GET", f"user/all-configs/")
+        """
+        Get user configurations using user proxy path
+        
+        Args:
+            uuid: The user UUID
+            
+        Returns:
+            List of configurations for the user
+        """
+        # Using custom request to user proxy path
+        user_url = f"{self._get_user_url(uuid)}/all-configs/"
+        response = requests.get(user_url)
+        response.raise_for_status()
+        return response.json()
 
     def get_user_profile(self, uuid: str) -> Dict:
-        """دریافت پروفایل کاربر"""
-        return self._make_request("GET", f"user/me/")
+        """
+        Get user profile using user proxy path
+        
+        Args:
+            uuid: The user UUID
+            
+        Returns:
+            User profile information
+        """
+        user_url = f"{self._get_user_url(uuid)}/me/"
+        response = requests.get(user_url)
+        response.raise_for_status()
+        return response.json()
 
-    def get_user_apps(self, platform: str = "auto") -> List[Dict]:
-        """دریافت لیست اپلیکیشن‌های کاربر"""
-        return self._make_request("GET", "user/apps/", params={"platform": platform})
+    def get_user_apps(self, uuid: str, platform: str = "auto") -> List[Dict]:
+        """
+        Get user applications using user proxy path
+        
+        Args:
+            uuid: The user UUID
+            platform: Target platform (auto, android, ios, etc.)
+            
+        Returns:
+            List of applications for the user
+        """
+        user_url = f"{self._get_user_url(uuid)}/apps/"
+        response = requests.get(user_url, params={"platform": platform})
+        response.raise_for_status()
+        return response.json()
 
-    def get_user_mtproxies(self) -> List[Dict]:
-        """دریافت لیست پروکسی‌های MTProto"""
-        return self._make_request("GET", "user/mtproxies/")
+    def get_user_mtproxies(self, uuid: str) -> List[Dict]:
+        """
+        Get MTProto proxies using user proxy path
+        
+        Args:
+            uuid: The user UUID
+            
+        Returns:
+            List of MTProto proxies for the user
+        """
+        user_url = f"{self._get_user_url(uuid)}/mtproxies/"
+        response = requests.get(user_url)
+        response.raise_for_status()
+        return response.json()
 
-    def get_user_short_url(self) -> Dict:
-        """دریافت لینک کوتاه کاربر"""
-        return self._make_request("GET", "user/short/")
+    def get_user_short_url(self, uuid: str) -> Dict:
+        """
+        Get short URL for user using user proxy path
+        
+        Args:
+            uuid: The user UUID
+            
+        Returns:
+            Short URL information for the user
+        """
+        user_url = f"{self._get_user_url(uuid)}/short/"
+        response = requests.get(user_url)
+        response.raise_for_status()
+        return response.json()
 
     def create_subscription(self, user_data: Dict) -> Dict:
-        """ایجاد اشتراک جدید"""
-        # تنظیم تاریخ شروع و پایان
+        """Create a new subscription"""
+        # Set start and end date
         start_date = datetime.utcnow()
         end_date = start_date + timedelta(days=user_data["duration_days"])
         
-        # تنظیم محدودیت ترافیک
+        # Set traffic limit
         user_data.update({
             "start_date": start_date.strftime("%Y-%m-%d"),
             "usage_limit_GB": user_data["traffic_gb"],
@@ -78,11 +171,11 @@ class HiddifyAPI:
         return self.create_user(user_data)
 
     def update_subscription(self, uuid: str, user_data: Dict) -> Dict:
-        """بروزرسانی اشتراک"""
+        """Update subscription"""
         return self.update_user(uuid, user_data)
 
     def get_subscription_status(self, uuid: str) -> Dict:
-        """دریافت وضعیت اشتراک"""
+        """Get subscription status"""
         profile = self.get_user_profile(uuid)
         return {
             "is_active": profile.get("is_active", False),
@@ -93,9 +186,21 @@ class HiddifyAPI:
         }
 
     def check_panel_status(self) -> bool:
-        """بررسی وضعیت پنل"""
+        """Check panel status"""
         try:
             response = self._make_request("GET", "panel/ping/")
             return response.get("msg") == "pong"
         except:
             return False
+            
+    def get_user_dashboard_url(self, uuid: str) -> str:
+        """
+        Generate the user dashboard URL
+        
+        Args:
+            uuid: The user UUID
+            
+        Returns:
+            Complete URL to user dashboard
+        """
+        return self._get_user_url(uuid)

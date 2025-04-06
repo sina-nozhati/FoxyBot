@@ -22,6 +22,17 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+# Check required tools
+echo -e "${BLUE}Checking required tools...${NC}"
+for tool in curl jq; do
+    if ! command -v $tool &> /dev/null; then
+        echo -e "${YELLOW}Installing $tool...${NC}"
+        apt-get update && apt-get install -y $tool
+    fi
+done
+echo -e "${GREEN}All required tools are installed.${NC}"
+echo ""
+
 # Set installation directory
 INSTALL_DIR="/opt/foxybot"
 echo -e "${BLUE}Installation Directory: ${INSTALL_DIR}${NC}"
@@ -31,16 +42,105 @@ echo ""
 echo -e "${BLUE}Please enter the following information:${NC}"
 echo ""
 
-# Get bot tokens
-read -p "Admin Bot Token: " ADMIN_BOT_TOKEN
-read -p "User Bot Token: " USER_BOT_TOKEN
+# Function to validate Hiddify panel
+validate_hiddify_panel() {
+    local domain=$1
+    local proxy_path=$2
+    local api_key=$3
+    
+    echo -e "${BLUE}Validating Hiddify panel...${NC}"
+    
+    # Test using ping endpoint
+    local response=$(curl -s -o /dev/null -w "%{http_code}" -H "Hiddify-API-Key: ${api_key}" "https://${domain}/${proxy_path}/api/v2/panel/ping/")
+    
+    if [[ "$response" == "200" ]]; then
+        echo -e "${GREEN}✓ Panel validated successfully!${NC}"
+        
+        # Get panel info for additional verification
+        local panel_info=$(curl -s -H "Hiddify-API-Key: ${api_key}" "https://${domain}/${proxy_path}/api/v2/panel/info/")
+        local panel_version=$(echo $panel_info | jq -r '.version // "Unknown"')
+        
+        echo -e "${GREEN}✓ Panel version: ${panel_version}${NC}"
+        return 0
+    else
+        echo -e "${RED}✗ Failed to validate panel. HTTP status: ${response}${NC}"
+        echo -e "${YELLOW}Make sure the domain, proxy path and API key are correct.${NC}"
+        return 1
+    fi
+}
 
-# Get Hiddify panel information
-read -p "Hiddify API Version (default: v2): " HIDDIFY_API_VERSION
-HIDDIFY_API_VERSION=${HIDDIFY_API_VERSION:-v2}
+# Function to validate Telegram bot token
+validate_telegram_token() {
+    local token=$1
+    local bot_type=$2
+    
+    echo -e "${BLUE}Validating ${bot_type} Telegram bot...${NC}"
+    
+    # Get bot info from Telegram API
+    local response=$(curl -s "https://api.telegram.org/bot${token}/getMe")
+    local success=$(echo $response | jq -r '.ok')
+    
+    if [[ "$success" == "true" ]]; then
+        local bot_username=$(echo $response | jq -r '.result.username')
+        local bot_name=$(echo $response | jq -r '.result.first_name')
+        
+        echo -e "${GREEN}✓ Bot validated successfully!${NC}"
+        echo -e "${GREEN}✓ Bot Name: ${bot_name}${NC}"
+        echo -e "${GREEN}✓ Username: @${bot_username}${NC}"
+        
+        # Confirm bot details
+        read -p "Is this the correct ${bot_type} bot? (y/n): " confirm
+        if [[ $confirm != "y" && $confirm != "Y" ]]; then
+            return 1
+        fi
+        
+        return 0
+    else
+        local error_desc=$(echo $response | jq -r '.description // "Unknown error"')
+        echo -e "${RED}✗ Failed to validate bot token: ${error_desc}${NC}"
+        return 1
+    fi
+}
 
-read -p "Hiddify API Base URL (default: https://panel.hiddify.com): " HIDDIFY_API_BASE_URL
-HIDDIFY_API_BASE_URL=${HIDDIFY_API_BASE_URL:-https://panel.hiddify.com}
+# Get and validate Admin Bot Token
+while true; do
+    read -p "Admin Bot Token: " ADMIN_BOT_TOKEN
+    
+    if validate_telegram_token "$ADMIN_BOT_TOKEN" "Admin"; then
+        break
+    else
+        echo -e "${YELLOW}Please enter a valid Admin Bot Token.${NC}"
+    fi
+done
+
+# Get and validate User Bot Token
+while true; do
+    read -p "User Bot Token: " USER_BOT_TOKEN
+    
+    if validate_telegram_token "$USER_BOT_TOKEN" "User"; then
+        break
+    else
+        echo -e "${YELLOW}Please enter a valid User Bot Token.${NC}"
+    fi
+done
+
+# Validate Hiddify panel information
+while true; do
+    read -p "Hiddify Panel Domain (without https://): " HIDDIFY_DOMAIN
+    read -p "Hiddify Admin Proxy Path: " HIDDIFY_PROXY_PATH
+    read -p "Hiddify User Proxy Path: " HIDDIFY_USER_PROXY_PATH
+    read -p "Hiddify API Key: " HIDDIFY_API_KEY
+    
+    if validate_hiddify_panel "$HIDDIFY_DOMAIN" "$HIDDIFY_PROXY_PATH" "$HIDDIFY_API_KEY"; then
+        break
+    else
+        echo -e "${YELLOW}Please enter valid Hiddify panel information.${NC}"
+    fi
+done
+
+# Construct Hiddify API Base URL
+HIDDIFY_API_BASE_URL="https://${HIDDIFY_DOMAIN}"
+HIDDIFY_API_VERSION="v2"
 
 # Get payment information
 read -p "Payment Card Number: " PAYMENT_CARD_NUMBER
@@ -67,10 +167,10 @@ ENCRYPTION_KEY=$(openssl rand -hex 32)
 # Display summary of entered information
 echo ""
 echo -e "${BLUE}Information Summary:${NC}"
-echo -e "${GREEN}Admin Bot Token:${NC} ${ADMIN_BOT_TOKEN:0:10}..."
-echo -e "${GREEN}User Bot Token:${NC} ${USER_BOT_TOKEN:0:10}..."
+echo -e "${GREEN}Admin Bot:${NC} Verified ✓"
+echo -e "${GREEN}User Bot:${NC} Verified ✓"
+echo -e "${GREEN}Hiddify Panel:${NC} Verified ✓"
 echo -e "${GREEN}API Version:${NC} ${HIDDIFY_API_VERSION}"
-echo -e "${GREEN}API Base URL:${NC} ${HIDDIFY_API_BASE_URL}"
 echo -e "${GREEN}Card Number:${NC} ${PAYMENT_CARD_NUMBER}"
 echo -e "${GREEN}Database Info:${NC} postgresql://${DB_USER}:******@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 echo ""
@@ -134,6 +234,9 @@ ENCRYPTION_KEY=${ENCRYPTION_KEY}
 # Hiddify Panel Settings
 HIDDIFY_API_VERSION=${HIDDIFY_API_VERSION}
 HIDDIFY_API_BASE_URL=${HIDDIFY_API_BASE_URL}
+HIDDIFY_PROXY_PATH=${HIDDIFY_PROXY_PATH}
+HIDDIFY_USER_PROXY_PATH=${HIDDIFY_USER_PROXY_PATH}
+HIDDIFY_API_KEY=${HIDDIFY_API_KEY}
 
 # Payment Card Number
 PAYMENT_CARD_NUMBER=${PAYMENT_CARD_NUMBER}
@@ -157,6 +260,25 @@ echo ""
 
 # Create log directory
 mkdir -p ${INSTALL_DIR}/logs
+
+# Test connections
+echo -e "${BLUE}Testing system connections...${NC}"
+cd ${INSTALL_DIR}
+python3 bot/test_connection.py
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Connection test failed. Please check your settings and try again.${NC}"
+    echo -e "${YELLOW}You can run the test manually with: 'cd ${INSTALL_DIR} && python3 bot/test_connection.py'${NC}"
+    
+    # Continue anyway?
+    read -p "Continue with installation anyway? (y/n): " CONTINUE
+    if [[ $CONTINUE != "y" && $CONTINUE != "Y" ]]; then
+        echo -e "${RED}Installation canceled.${NC}"
+        exit 1
+    fi
+else
+    echo -e "${GREEN}Connection test passed successfully!${NC}"
+fi
 
 # Create systemd service
 echo -e "${BLUE}Creating systemd service...${NC}"
@@ -196,6 +318,7 @@ echo -e "${YELLOW}Important Information:${NC}"
 echo -e "• Installation Path: ${INSTALL_DIR}"
 echo -e "• Settings File: ${INSTALL_DIR}/.env"
 echo -e "• Logs: ${INSTALL_DIR}/logs/foxybot.log"
+echo -e "• Test Connection Command: ${GREEN}cd ${INSTALL_DIR} && python3 bot/test_connection.py${NC}"
 echo -e "• Service Status Command: ${GREEN}systemctl status foxybot.service${NC}"
 echo -e "• View Logs Command: ${GREEN}journalctl -u foxybot.service -f${NC}"
 echo ""

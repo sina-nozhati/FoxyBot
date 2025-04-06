@@ -16,8 +16,11 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key-here')
 ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY', 'your-encryption-key-here')
 
 # Hiddify panel settings
-HIDDIFY_API_VERSION = 'v2'
+HIDDIFY_API_VERSION = os.getenv('HIDDIFY_API_VERSION', 'v2')
 HIDDIFY_API_BASE_URL = os.getenv('HIDDIFY_API_BASE_URL', 'https://panel.hiddify.com')
+HIDDIFY_PROXY_PATH = os.getenv('HIDDIFY_PROXY_PATH', 'proxy')  # Admin proxy path
+HIDDIFY_USER_PROXY_PATH = os.getenv('HIDDIFY_USER_PROXY_PATH', 'proxy')  # User proxy path
+HIDDIFY_API_KEY = os.getenv('HIDDIFY_API_KEY', 'your-api-key-here')
 
 # Payment settings
 PAYMENT_CARD_NUMBER = os.getenv('PAYMENT_CARD_NUMBER', '6037-XXXX-XXXX-1234')

@@ -86,4 +86,74 @@ local_settings.py
 
 # Logs
 logs/
-*.log 
+*.log
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+.env.*
+
+# Database files
+*.db
+*.sqlite3
+*.sqlite3-journal
+
+# Logs directory
+logs/
+
+# Visual Studio Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Spyder
+.spyderproject
+.spyproject
+
+# User-specific configuration files
+config.local.py
+
+# Backup files
+*.bak 
