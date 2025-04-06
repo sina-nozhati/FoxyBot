@@ -39,10 +39,39 @@ async def main():
         
         # اجرای همزمان ربات‌ها
         logger.info("Starting both bots in polling mode...")
-        await asyncio.gather(
-            admin_bot.application.run_polling(allowed_updates=["message", "callback_query", "my_chat_member"]),
-            user_bot.application.run_polling(allowed_updates=["message", "callback_query", "my_chat_member"])
-        )
+        
+        # در نسخه 20 کتابخانه python-telegram-bot، باید از روش متفاوتی برای اجرای همزمان ربات‌ها استفاده کنیم
+        # به جای asyncio.gather، دو تا ربات را به صورت مجزا اجرا می‌کنیم
+        
+        admin_app = admin_bot.application
+        user_app = user_bot.application
+        
+        # اینیشیالایز کردن هر دو ربات
+        await admin_app.initialize()
+        await user_app.initialize()
+        
+        # شروع کردن پولینگ برای هر دو ربات
+        await admin_app.start()
+        await user_app.start()
+        
+        # استفاده از ساختار try-finally برای اطمینان از بسته شدن صحیح ربات‌ها
+        try:
+            # ماندن در حالت اجرا تا زمانی که کاربر کلید کنترل+C را فشار دهد
+            await admin_app.updater.start_polling(allowed_updates=["message", "callback_query", "my_chat_member"])
+            await user_app.updater.start_polling(allowed_updates=["message", "callback_query", "my_chat_member"])
+            
+            # ایجاد یک سیگنال برای توقف برنامه با کلید کنترل+C
+            stop_signal = asyncio.Future()
+            await stop_signal
+            
+        finally:
+            # خاتمه دادن به هر دو ربات
+            await admin_app.stop()
+            await user_app.stop()
+            
+            # شات‌داون کردن نهایی
+            await admin_app.shutdown()
+            await user_app.shutdown()
         
     except Exception as e:
         logger.error(f"Error starting bots: {e}")

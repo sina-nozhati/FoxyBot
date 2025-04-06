@@ -7,6 +7,13 @@ from config import PAYMENT_CARD_NUMBER
 
 class PaymentManager:
     def __init__(self, db: Session, bot):
+        """
+        Initialize the PaymentManager.
+        
+        Args:
+            db: Database session
+            bot: Telegram bot instance
+        """
         self.db = db
         self.bot = bot
 
@@ -57,148 +64,282 @@ class PaymentManager:
         
         return transaction
 
-    def handle_payment_receipt(
-        self,
-        user_id: int,
-        transaction_id: int,
-        receipt_image: str
-    ) -> Optional[models.Transaction]:
-        """پردازش تصویر رسید پرداخت"""
-        transaction = self.db.query(models.Transaction).filter(
-            models.Transaction.id == transaction_id,
-            models.Transaction.user_id == user_id,
-            models.Transaction.status == models.TransactionStatus.PENDING
-        ).first()
+    async def send_payment_request(self, chat_id: int, transaction: models.Transaction) -> None:
+        """
+        Send a payment request message to the user.
         
-        if not transaction:
-            return None
-            
-        # بروزرسانی تراکنش با تصویر رسید
-        transaction.receipt_image = receipt_image
-        self.db.commit()
+        Args:
+            chat_id: Chat ID to send the message to
+            transaction: Transaction object
+        """
+        # ایجاد دکمه‌های تایید و لغو
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "✅ تأیید پرداخت",
+                    callback_data=f"payment_confirm_{transaction.id}"
+                ),
+                InlineKeyboardButton(
+                    "❌ لغو پرداخت",
+                    callback_data=f"payment_cancel_{transaction.id}"
+                )
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
         
-        # ارسال پیام به ادمین‌ها
-        admin_message = (
-            f"🔔 درخواست پرداخت جدید:\n"
-            f"👤 کاربر: {user_id}\n"
-            f"💰 مبلغ: {transaction.amount:,} تومان\n"
-            f"📝 توضیحات: {transaction.description}\n"
-            f"🆔 شناسه تراکنش: {transaction.id}"
+        # ارسال پیام به کاربر
+        await self.bot.send_message(
+            chat_id=chat_id,
+            text=(
+                f"💸 درخواست پرداخت:\n\n"
+                f"💰 مبلغ: {transaction.amount:,} تومان\n"
+                f"📝 توضیحات: {transaction.description}\n"
+                f"📅 تاریخ: {transaction.created_at.strftime('%Y-%m-%d %H:%M')}\n\n"
+                "لطفاً تصویر رسید پرداخت را ارسال کنید."
+            ),
+            reply_markup=reply_markup
         )
         
-        # TODO: ارسال پیام به تمام ادمین‌ها
-        # for admin_id in get_admin_ids():
-        #     self.bot.send_message(
-        #         chat_id=admin_id,
-        #         text=admin_message,
-        #         reply_markup=create_admin_payment_keyboard(transaction.id)
-        #     )
+    async def handle_payment_receipt(self, user_id: int, chat_id: int, photo_id: str, transaction_id: Optional[int] = None) -> None:
+        """
+        Handle a payment receipt image.
         
-        return transaction
-
-    def confirm_payment(
-        self,
-        admin_id: int,
-        transaction_id: int
-    ) -> Optional[models.Transaction]:
-        """تأیید پرداخت توسط ادمین"""
-        transaction = self.db.query(models.Transaction).filter(
-            models.Transaction.id == transaction_id,
-            models.Transaction.status == models.TransactionStatus.PENDING
-        ).first()
-        
-        if not transaction:
-            return None
+        Args:
+            user_id: User ID
+            chat_id: Chat ID
+            photo_id: Photo file ID
+            transaction_id: Transaction ID (optional)
+        """
+        # اگر شناسه تراکنش ارسال نشده، آخرین تراکنش در انتظار کاربر را دریافت می‌کنیم
+        if not transaction_id:
+            transaction = self.db.query(models.Transaction)\
+                .filter(models.Transaction.user_id == user_id, 
+                        models.Transaction.status == models.TransactionStatus.PENDING)\
+                .order_by(models.Transaction.created_at.desc())\
+                .first()
+                
+            if not transaction:
+                await self.bot.send_message(
+                    chat_id=chat_id,
+                    text="❌ هیچ تراکنش در انتظاری یافت نشد."
+                )
+                return
+                
+            transaction_id = transaction.id
             
-        # بروزرسانی وضعیت تراکنش
-        transaction.status = models.TransactionStatus.COMPLETED
+        # بروزرسانی تراکنش با شناسه عکس
+        transaction = self.db.query(models.Transaction).get(transaction_id)
+        if not transaction:
+            await self.bot.send_message(
+                chat_id=chat_id,
+                text="❌ تراکنش مورد نظر یافت نشد."
+            )
+            return
+            
+        transaction.receipt_photo_id = photo_id
+        transaction.updated_at = datetime.utcnow()
         self.db.commit()
         
-        # بروزرسانی موجودی کیف پول کاربر
+        # ارسال پیام تأیید به کاربر
+        await self.bot.send_message(
+            chat_id=chat_id,
+            text=(
+                "✅ رسید پرداخت با موفقیت دریافت شد.\n"
+                "پس از تأیید مدیر، مبلغ به کیف پول شما اضافه خواهد شد."
+            )
+        )
+        
+        # ارسال اطلاعیه به ادمین‌ها
+        admins = self.db.query(models.User).filter(models.User.is_admin == True).all()
+        for admin in admins:
+            # ایجاد دکمه‌های تأیید/رد برای ادمین
+            keyboard = [
+                [
+                    InlineKeyboardButton(
+                        "✅ تأیید",
+                        callback_data=f"admin_confirm_{transaction_id}"
+                    ),
+                    InlineKeyboardButton(
+                        "❌ رد",
+                        callback_data=f"admin_reject_{transaction_id}"
+                    )
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            # ارسال عکس و اطلاعات تراکنش به ادمین
+            await self.bot.send_photo(
+                chat_id=admin.telegram_id,
+                photo=photo_id,
+                caption=(
+                    "💰 درخواست پرداخت جدید:\n\n"
+                    f"👤 کاربر: {transaction.user.first_name} {transaction.user.last_name}\n"
+                    f"🆔 شناسه کاربر: {transaction.user.telegram_id}\n"
+                    f"💰 مبلغ: {transaction.amount:,} تومان\n"
+                    f"📝 توضیحات: {transaction.description}\n"
+                    f"📅 تاریخ: {transaction.created_at.strftime('%Y-%m-%d %H:%M')}"
+                ),
+                reply_markup=reply_markup
+            )
+            
+    async def confirm_payment(self, admin_id: int, transaction_id: int) -> None:
+        """
+        Confirm a payment transaction.
+        
+        Args:
+            admin_id: Admin ID
+            transaction_id: Transaction ID
+        """
+        # بررسی وجود تراکنش
+        transaction = self.db.query(models.Transaction).get(transaction_id)
+        if not transaction:
+            await self.bot.send_message(
+                chat_id=admin_id,
+                text="❌ تراکنش مورد نظر یافت نشد."
+            )
+            return
+            
+        # بررسی وضعیت تراکنش
+        if transaction.status != models.TransactionStatus.PENDING:
+            await self.bot.send_message(
+                chat_id=admin_id,
+                text=f"❌ این تراکنش قبلاً {transaction.status.value} شده است."
+            )
+            return
+            
+        # تأیید تراکنش
+        crud.update_transaction_status(
+            self.db,
+            transaction_id,
+            models.TransactionStatus.COMPLETED
+        )
+        
+        # اضافه کردن مبلغ به کیف پول کاربر
         crud.update_user_wallet(
             self.db,
-            user_id=transaction.user_id,
-            amount=transaction.amount
+            transaction.user_id,
+            transaction.amount
+        )
+        
+        # ارسال پیام تأیید به ادمین
+        await self.bot.send_message(
+            chat_id=admin_id,
+            text=(
+                "✅ تراکنش با موفقیت تأیید شد.\n"
+                f"💰 مبلغ {transaction.amount:,} تومان به کیف پول کاربر اضافه شد."
+            )
         )
         
         # ارسال پیام تأیید به کاربر
-        user_message = (
-            f"✅ پرداخت شما با موفقیت تأیید شد.\n"
-            f"💰 مبلغ: {transaction.amount:,} تومان\n"
-            f"📝 توضیحات: {transaction.description}"
+        await self.bot.send_message(
+            chat_id=transaction.user.telegram_id,
+            text=(
+                "✅ پرداخت شما تأیید شد.\n"
+                f"💰 مبلغ {transaction.amount:,} تومان به کیف پول شما اضافه شد.\n"
+                f"💳 موجودی فعلی: {transaction.user.wallet_balance:,} تومان"
+            )
         )
         
-        self.bot.send_message(
-            chat_id=transaction.user_id,
-            text=user_message
-        )
+    async def reject_payment(self, admin_id: int, transaction_id: int, reason: str = "") -> None:
+        """
+        Reject a payment transaction.
         
-        return transaction
-
-    def reject_payment(
-        self,
-        admin_id: int,
-        transaction_id: int,
-        reason: str
-    ) -> Optional[models.Transaction]:
-        """رد پرداخت توسط ادمین"""
-        transaction = self.db.query(models.Transaction).filter(
-            models.Transaction.id == transaction_id,
-            models.Transaction.status == models.TransactionStatus.PENDING
-        ).first()
-        
+        Args:
+            admin_id: Admin ID
+            transaction_id: Transaction ID
+            reason: Rejection reason
+        """
+        # بررسی وجود تراکنش
+        transaction = self.db.query(models.Transaction).get(transaction_id)
         if not transaction:
-            return None
+            await self.bot.send_message(
+                chat_id=admin_id,
+                text="❌ تراکنش مورد نظر یافت نشد."
+            )
+            return
             
-        # بروزرسانی وضعیت تراکنش
-        transaction.status = models.TransactionStatus.REJECTED
-        transaction.description += f"\n❌ رد شده: {reason}"
-        self.db.commit()
+        # بررسی وضعیت تراکنش
+        if transaction.status != models.TransactionStatus.PENDING:
+            await self.bot.send_message(
+                chat_id=admin_id,
+                text=f"❌ این تراکنش قبلاً {transaction.status.value} شده است."
+            )
+            return
+            
+        # رد تراکنش
+        crud.update_transaction_status(
+            self.db,
+            transaction_id,
+            models.TransactionStatus.REJECTED,
+            description=f"{transaction.description} (دلیل رد: {reason})"
+        )
+        
+        # ارسال پیام رد به ادمین
+        await self.bot.send_message(
+            chat_id=admin_id,
+            text=(
+                "✅ تراکنش با موفقیت رد شد."
+            )
+        )
         
         # ارسال پیام رد به کاربر
-        user_message = (
-            f"❌ پرداخت شما رد شد.\n"
+        reject_message = (
+            "❌ پرداخت شما رد شد.\n"
             f"💰 مبلغ: {transaction.amount:,} تومان\n"
-            f"📝 دلیل: {reason}\n\n"
-            "لطفاً با پشتیبانی تماس بگیرید."
         )
         
-        self.bot.send_message(
-            chat_id=transaction.user_id,
-            text=user_message
-        )
-        
-        return transaction
-
-    def cancel_payment(
-        self,
-        user_id: int,
-        transaction_id: int
-    ) -> Optional[models.Transaction]:
-        """لغو پرداخت توسط کاربر"""
-        transaction = self.db.query(models.Transaction).filter(
-            models.Transaction.id == transaction_id,
-            models.Transaction.user_id == user_id,
-            models.Transaction.status == models.TransactionStatus.PENDING
-        ).first()
-        
-        if not transaction:
-            return None
+        if reason:
+            reject_message += f"📝 دلیل: {reason}\n"
             
-        # بروزرسانی وضعیت تراکنش
-        transaction.status = models.TransactionStatus.CANCELLED
-        self.db.commit()
+        await self.bot.send_message(
+            chat_id=transaction.user.telegram_id,
+            text=reject_message
+        )
+        
+    async def cancel_payment(self, user_id: int, transaction_id: int) -> None:
+        """
+        Cancel a payment transaction.
+        
+        Args:
+            user_id: User ID
+            transaction_id: Transaction ID
+        """
+        # بررسی وجود تراکنش
+        transaction = self.db.query(models.Transaction).get(transaction_id)
+        if not transaction:
+            await self.bot.send_message(
+                chat_id=user_id,
+                text="❌ تراکنش مورد نظر یافت نشد."
+            )
+            return
+            
+        # بررسی مالکیت تراکنش
+        if transaction.user_id != user_id:
+            await self.bot.send_message(
+                chat_id=user_id,
+                text="❌ شما مجاز به لغو این تراکنش نیستید."
+            )
+            return
+            
+        # بررسی وضعیت تراکنش
+        if transaction.status != models.TransactionStatus.PENDING:
+            await self.bot.send_message(
+                chat_id=user_id,
+                text=f"❌ این تراکنش قبلاً {transaction.status.value} شده است."
+            )
+            return
+            
+        # لغو تراکنش
+        crud.update_transaction_status(
+            self.db,
+            transaction_id,
+            models.TransactionStatus.CANCELLED
+        )
         
         # ارسال پیام لغو به کاربر
-        user_message = (
-            f"❌ پرداخت شما لغو شد.\n"
-            f"💰 مبلغ: {transaction.amount:,} تومان\n"
-            f"📝 توضیحات: {transaction.description}"
-        )
-        
-        self.bot.send_message(
+        await self.bot.send_message(
             chat_id=user_id,
-            text=user_message
-        )
-        
-        return transaction 
+            text=(
+                "✅ تراکنش با موفقیت لغو شد."
+            )
+        ) 
